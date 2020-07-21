@@ -1,0 +1,359 @@
+/* eslint-disable react/prop-types */
+import React, { useEffect, useState, useLayoutEffect } from "react";
+import { useSnackbar } from "notistack";
+
+import classNames from "classnames";
+import { makeStyles } from "@material-ui/core/styles";
+import Card from "components/Card/Card.js";
+import CardHeader from "components/Card/CardHeader.js";
+import CardBody from "components/Card/CardBody.js";
+import CardActions from "@material-ui/core/CardActions";
+import CardContent from "@material-ui/core/CardContent";
+import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
+import Divider from "@material-ui/core/Divider";
+import { getcampaignbyid } from "services/KnowledgeManagement.js";
+import LinearProgress from "@material-ui/core/LinearProgress";
+
+// core components
+import Header from "components/Header/Header.js";
+import Footer from "components/Footer/Footer.js";
+import GridContainer from "components/Grid/GridContainer.js";
+import GridItem from "components/Grid/GridItem.js";
+import HeaderLinks from "components/Header/HeaderLinks.js";
+import NavPills from "components/NavPills/NavPills.js";
+import Parallax from "components/Parallax/Parallax.js";
+import CampaignItem from "./CampaignItem";
+import FundPage from "./Sections/FundPage.js";
+
+import { getUserSession } from "services/UserManagement.js";
+import sidebar from "assets/img/sidebar.png";
+import FavoriteIcon from "@material-ui/icons/Favorite";
+import { Line } from "rc-progress";
+
+import styles from "assets/jss/material-kit-react/views/profilePage.js";
+import { StellarUrl } from "variables/constants";
+import StellarSdk from "stellar-sdk";
+import Badge from "components/Badge/Badge.js";
+let lifeCount = 0;
+let dollarCount = 0;
+const useStyles = makeStyles(styles);
+export default function SingleBeneficiariesPage(props) {
+  var server = new StellarSdk.Server(StellarUrl);
+  var lastCursor = 0; // or load where you left off
+
+  const { campaignid } = props.match.params;
+  const [received, setReceived] = useState([]);
+  const [life, setLife] = useState(0);
+  const [dollars, setDollars] = useState(0);
+
+  // eslint-disable-next-line no-unused-vars
+  const [user, setUser] = useState(getUserSession());
+
+  const classes = useStyles();
+  const { ...rest } = props;
+  const [loading, setLoading] = useState(false);
+  const [campaign, setcampaign] = useState(null);
+
+  const [endDate, setEndDate] = useState(new Date().getTime());
+
+  const [timer, setTimer] = useState("Evaluating Remaining Time");
+  const { enqueueSnackbar } = useSnackbar();
+
+  const county = () => {
+    var today = new Date().getTime();
+    var gap = endDate - today;
+    var bal_days = Math.floor(gap / (1000 * 60 * 60 * 24));
+    var bal_hours = Math.floor(
+      (gap % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    var bal_minutes = Math.floor((gap % (1000 * 60 * 60)) / (1000 * 60));
+    setTimer(
+      "Ends in " + bal_days + "d " + bal_hours + "h " + bal_minutes + "m "
+    );
+    if (gap < 0) {
+      setTimer("Ended");
+    }
+  };
+  useEffect(() => {
+    async function fetch() {
+      setLoading(true);
+      setTimer("Evaluating Remaining Time");
+      const init = await getcampaignbyid(campaignid);
+      if (init !== null) {
+        setcampaign(init);
+        setEndDate(new Date(init.endDate).getTime());
+        server
+          .payments()
+          .forAccount(init.recipient)
+          .cursor(lastCursor)
+          .stream({
+            onmessage: txResponse => {
+              var arrReceived = received;
+              if (
+                txResponse.type == "payment" &&
+                txResponse.to == init.recipient
+              ) {
+                console.log(txResponse);
+
+                arrReceived.push(txResponse);
+                if (txResponse.asset_code == "LIFE") {
+                  setLife(parseInt(txResponse.amount) + lifeCount);
+                  lifeCount = parseInt(txResponse.amount) + lifeCount;
+
+                  setDollars(parseInt(txResponse.amount) + dollarCount);
+                  dollarCount = parseInt(txResponse.amount) + dollarCount;
+                  // setLife(life + parseInt(txResponse.amount));
+                }
+              }
+              setReceived(arrReceived);
+            }
+          });
+
+        server
+          .payments()
+          .forAccount(init.recipient)
+          .cursor("now")
+          .stream({
+            onmessage: txResponse => {
+              if (
+                txResponse.type == "payment" &&
+                txResponse.to == init.recipient
+              ) {
+                enqueueSnackbar(
+                  txResponse.from +
+                    " funded " +
+                    txResponse.amount +
+                    " " +
+                    txResponse.asset_code,
+                  { variant: "info" }
+                );
+              }
+            }
+          });
+      }
+      setLoading(false);
+      setTimer("Evaluating Remaining Time");
+    }
+
+    fetch();
+  }, [campaignid]);
+
+  useLayoutEffect(() => {
+    const Sid = setInterval(county, 1000);
+    return () => clearInterval(Sid);
+  }, [county]);
+  return (
+    <div>
+      <Header
+        color="white"
+        brand={
+          <img
+            height="50px"
+            src={sidebar}
+            onClick={() => {
+              props.history.push("/");
+            }}
+          ></img>
+        }
+        rightLinks={<HeaderLinks />}
+        fixed
+        changeColorOnScroll={{
+          height: 200,
+          color: "white"
+        }}
+        {...rest}
+      />
+      <Parallax
+        style={{ height: "200px" }}
+        small
+        filter
+        image={require("assets/img/bg2.jpg")}
+      />
+      <div className={classNames(classes.main, classes.mainRaised)}>
+        <div>
+          <div className={classes.container}>
+            <GridContainer>
+              <GridItem xs={12} sm={12} md={12} lg={12}>
+                <Card style={{ "min-height": "500px" }}>
+                  <CardHeader color="info" className={classes.cardHeader}>
+                    <h4>{campaign ? campaign.campaignname : "campaign"}</h4>
+                  </CardHeader>
+                  <CardBody>
+                    {campaign && (
+                      <GridContainer>
+                        <GridItem xs={12} sm={4} md={4} lg={3}>
+                          <CampaignItem
+                            campaign_name={campaign.campaignname}
+                            campaign_image={campaign.image}
+                            campaign_story={campaign.story}
+                          />
+                        </GridItem>
+                        <GridItem xs={12} sm={8} md={8} lg={9}>
+                          <Card className={classes.root}>
+                            <CardContent>
+                              <GridContainer>
+                                <GridItem xs={12} sm={12} md={6} lg={6}>
+                                  <Typography
+                                    align="left"
+                                    variant="overline"
+                                    component="h2"
+                                  >
+                                    {received && received.length > 0 ? (
+                                      <Badge color={"success"}>
+                                        {received.length +
+                                          (received.length == 1
+                                            ? " Donation Received"
+                                            : " Donations Received")}
+                                      </Badge>
+                                    ) : null}
+                                  </Typography>
+                                </GridItem>
+                                <GridItem xs={12} sm={12} md={6} lg={6}>
+                                  <Typography
+                                    align="right"
+                                    variant="overline"
+                                    component="h2"
+                                  >
+                                    <Badge color={"danger"}>{timer}</Badge>
+                                  </Typography>
+                                </GridItem>
+                                <GridItem xs={12} sm={12} md={12} lg={12}>
+                                  <Typography
+                                    align="center"
+                                    variant="overline"
+                                    component="h2"
+                                  >
+                                    {"$" +
+                                      dollars +
+                                      " out of $" +
+                                      campaign.goal +
+                                      " collected!"}
+                                    <Line
+                                      percent={(dollars / campaign.goal) * 100}
+                                      strokeWidth="1.5"
+                                      strokeColor="green"
+                                    />
+                                  </Typography>
+                                </GridItem>
+                                <GridItem xs={12} sm={12} md={12} lg={12}>
+                                  <Typography
+                                    align="center"
+                                    variant="overline"
+                                    component="h2"
+                                  >
+                                    <Badge>{life + " LIFE Tokens"}</Badge>
+                                  </Typography>
+                                </GridItem>
+                                <GridItem xs={12} sm={12} md={12} lg={12}>
+                                  <Typography
+                                    variant="body1"
+                                    color="textSecondary"
+                                    component="p"
+                                  >
+                                    {campaign.Story}
+                                  </Typography>
+                                </GridItem>
+                              </GridContainer>
+
+                              {user && timer != "Ended" && (
+                                <>
+                                  <Typography
+                                    gutterBottom
+                                    variant="overline"
+                                    component="h2"
+                                  >
+                                    Feeling Charitable? Give Life!
+                                  </Typography>
+                                  <NavPills
+                                    color="primary"
+                                    tabs={[
+                                      {
+                                        tabButton: "LIFE",
+                                        tabIcon: FavoriteIcon,
+                                        tabContent: (
+                                          <FundPage
+                                            campaign={campaign}
+                                            coin={"LIFE"}
+                                            rate={1}
+                                          />
+                                        )
+                                      }
+                                    ]}
+                                  />
+                                </>
+                              )}
+                            </CardContent>
+
+                            <CardActions>
+                              {campaign.creator != campaign.recipient && (
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    props.history.push(
+                                      "/profile/" + campaign.recipient
+                                    );
+                                  }}
+                                >
+                                  View Recipient Profile
+                                </Button>
+                              )}
+                              <Button
+                                size="small"
+                                color="primary"
+                                onClick={() => {
+                                  props.history.push(
+                                    "/profile/" + campaign.creator
+                                  );
+                                }}
+                              >
+                                View Creator Profile
+                              </Button>
+
+                              {!user && (
+                                <Button
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    props.history.push(
+                                      `/auth?from=${btoa(
+                                        props.location.pathname
+                                      )}`
+                                    );
+                                  }}
+                                >
+                                  Fund campaign
+                                </Button>
+                              )}
+                            </CardActions>
+                            <Divider />
+                          </Card>
+                        </GridItem>
+                      </GridContainer>
+                    )}
+                    {loading && <LinearProgress />}
+                    {!loading && !campaign && (
+                      <GridItem
+                        xs={11}
+                        sm={11}
+                        md={11}
+                        lg={11}
+                        style={{ "text-align": "center" }}
+                      >
+                        <Typography variant="h4" noWrap>
+                          campaign Not Found
+                        </Typography>
+                      </GridItem>
+                    )}
+                  </CardBody>
+                </Card>
+              </GridItem>
+            </GridContainer>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
+}
