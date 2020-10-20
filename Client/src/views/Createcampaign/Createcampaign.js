@@ -27,8 +27,8 @@ import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker
 } from "@material-ui/pickers";
-import { addcampaign } from "utility/Campaigncontrol";
-
+import { addcampaign } from "utility/Usercontrol";
+import {  getUserSession } from "utility/Usercontrol.js";
 import { useSnackbar } from "notistack";
 import Button from "@material-ui/core/Button";
 
@@ -37,11 +37,11 @@ const createcampaignstyle = makeStyles(styles);
 function Createcampaign(props) {
   const classes = createcampaignstyle();
   const { ...rest } = props;
-
-  const [image, setimage] = useState("");
+  const [user, setUser] = useState(getUserSession());
+  const [image, setimage] = useState([]);
   const [campaignname, setcampaignname] = useState("");
   const [targetdate, settargetdate] = useState(new Date());
-  const [amount, setamount] = useState(0);
+  const [amount, setamount] = useState(null);
   const [Story, setStory] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -49,56 +49,58 @@ function Createcampaign(props) {
   const [imageError, setimageError] = useState(false);
   const [campaignnameError, setcampaignnameError] = useState(false);
   const [amountError, setamountError] = useState(false);
+  const [targetdateerror, settargetdateerror] = useState(false);
   const [StoryError, setStoryError] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const onDrop = picture => {
+  const campaignimage = picture => {
     if (picture.length > 0) {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => setimage(reader.result));
-      reader.readAsDataURL(picture[0]);
+      setimage(picture);
+      setimageError(false)
     } else {
-      setimage("");
+      setimage(null);
+      setimageError(true)
     }
   };
 
   const Createcampaign = async event => {
     event.preventDefault();
 
-    setimageError(image === "" ? true : false);
+    setimageError(image.length == 0 ? true : false);
     setcampaignnameError(campaignname === "" ? true : false);
-    setamountError(amount === "" ? true : false);
+    setamountError(amount === null ? true : false);
     setStoryError(Story === "" ? true : false);
+    settargetdateerror(targetdate < new Date() || targetdate == new Date() ? true : false);
 
-    if (image !== "" && campaignname !== "" && amount !== "" && Story !== "") {
+    if (
+      image.length !== 0 && 
+      campaignname !== "" && 
+      amount !== null && 
+      Story !== "" 
+      ) 
+      {
       setLoading(true);
 
-      const response = await addcampaign({
-        image,
+      const response = await addcampaign(
+        image[0],
         campaignname,
         amount,
         Story,
-        life: targetdate
-      });
+        targetdate
+      );
       if (response !== null) {
         switch (response.status) {
           case 200:
-            enqueueSnackbar("Campaign Created Successfully", {
+            enqueueSnackbar("Campaign Created Successfully and submitted for approval", {
               variant: "success"
             });
-            props.history.push("/Campaign/" + response.data.data._id);
-            break;
-          case 202:
-            enqueueSnackbar("Kyc Approval Pending", { variant: "warning" });
+            props.history.push('/');
             break;
           case 203:
             enqueueSnackbar("You can only create one Campaign at a time", {
               variant: "warning"
             });
-            break;
-          case 201:
-            enqueueSnackbar("Campaign Creation Failed", { variant: "error" });
             break;
           case null:
             enqueueSnackbar("Campaign Creation Failed", { variant: "error" });
@@ -158,21 +160,22 @@ function Createcampaign(props) {
                       <CardBody>
                         <GridContainer>
                           <GridItem xs={12} sm={12} md={4} lg={3}>
-                            <ImageUploader
-                              className="title"
+                          <ImageUploader
+                              style={imageError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                              label={
+                                image.length === 0 
+                                  ?  "Not Selected"
+                                  : "Selected"
+                              }                              
                               singleImage={true}
                               withIcon={true}
-                              label={
-                                image !== ""
-                                  ? "image Selected"
-                                  : "image Not Selected"
-                              }
-                              buttonText="Select A image *"
-                              onChange={onDrop}
-                              imgExtension={[".jpg", ".gif", ".png"]}
+                              onChange={campaignimage}
+                              imgExtension={[".jpg", ".gif", ".png", ".gif"]}
+                              maxFileSize={5242880}
                               withPreview={true}
-                              fileTypeError={"Is not of type JPG, PNG or GIF"}
-                              fileSizeError={"max size of 2 mb"}
+                              singleImage={true}
+                              buttonText="Select Image *"  
+                                                     
                             />
                           </GridItem>
                           <GridItem xs={12} sm={12} md={8} lg={9}>
@@ -215,12 +218,12 @@ function Createcampaign(props) {
                                         />
                                       </InputAdornment>
                                     ),
-                                    required: true,
+                                    required: true, 
                                     onChange: function(e) {
                                       setamount(e.target.value);
 
                                       setamountError(
-                                        e.target.value === "" ? true : false
+                                        e.target.value === null ||  e.target.value < 0 ? true : false
                                       );
                                     }
                                   }}
@@ -230,6 +233,7 @@ function Createcampaign(props) {
                               <GridItem xs={12} sm={12} md={4} lg={4}>
                                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
                                   <KeyboardDatePicker
+                                    style={targetdateerror ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
                                     margin="normal"
                                     label="End Date *"
                                     id="date-picker-dialog"
@@ -237,6 +241,7 @@ function Createcampaign(props) {
                                     value={targetdate}
                                     onChange={date => {
                                       settargetdate(date);
+                                      settargetdateerror(date < new Date() || date == new Date() ? true : false)
                                     }}
                                     KeyboardButtonProps={{
                                       "aria-label": "change date"

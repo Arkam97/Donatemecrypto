@@ -4,7 +4,7 @@ import { withRouter, Link } from "react-router-dom";
 import CardBody from "components/Card/CardBody.js";
 import Typography from "@material-ui/core/Typography";
 import styles from "assets/jss/material-kit-react/views/profilePage.js";
-import { getallcampaigns } from "utility/Campaigncontrol";
+import { getallapprovedcampaigns } from "utility/Usercontrol";
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import Header from "components/Header/Header.js";
@@ -29,7 +29,7 @@ function CampaignList(props) {
   useEffect(() => {
     async function fetchallcampaigns() {
       setLoading(true);
-      const intoit = await getallcampaigns();
+      const intoit = await getallapprovedcampaigns();
       if (intoit !== null) {
         setcampaigns(intoit);
       }
@@ -70,16 +70,16 @@ function CampaignList(props) {
                     <GridContainer justify="center">
                       {campaigns.length > 0 &&
                         campaigns.map((item, index) => (
-                          <GridItem key={index} xs={12} sm={6} md={4} lg={4}>
-                            <Link to={"/campaign/" + item._id}>
+                          <GridItem key={index} xs={12} sm={5} md={3} lg={3}>
                               <CampaignItem
+                                campaign_id={item._id}  
                                 campaign_name={item.campaignname}
                                 campaign_image={item.image}
                                 campaign_list={true}
-                                campaign_story={item.Story}
-                                campaign_endDate={item.Dateend}
+                                campaign_story={item.story}
+                                campaign_endDate={item.targetdate}
+                                camapign_likes={item.likecount} 
                               />
-                            </Link>
                           </GridItem>
                         ))}
 

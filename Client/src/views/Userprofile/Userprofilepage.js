@@ -15,11 +15,11 @@ import Button from "components/CustomButtons/Button.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
-
+import Typography from "@material-ui/core/Typography";
 import DetailsOutlinedIcon from "@material-ui/icons/DetailsOutlined";
 import SupervisedUserCircleIcon from "@material-ui/icons/SupervisedUserCircle";
 import AccountBoxIcon from "@material-ui/icons/AccountBox";
-
+import FileCopyIcon from '@material-ui/icons/FileCopy';
 // core components
 import Header from "components/Header/Header.js";
 import Footer from "components/Footer/Footer.js";
@@ -30,48 +30,78 @@ import NavPills from "components/NavPills/NavPills.js";
 import Parallax from "components/Parallax/Parallax.js";
 import DetailsExpansions from "./Components/DetailsExpansions";
 import ReceiptIcon from "@material-ui/icons/Receipt";
-import Transactions from "./Components/Transactions";
-import Balance from "./Components/Balance";
-
+import Divider from '@material-ui/core/Divider';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import { useSnackbar } from 'notistack';
 import styles from "assets/jss/material-kit-react/views/profilePage.js";
-import withAuthorization from "components/Authentication/Index.js";
-import { GetAccount, getUserSession } from "utility/Usercontrol.js";
+import {  getUserSession } from "utility/Usercontrol.js";
 const useStyles = makeStyles(styles);
 
 function Userprofilepage(props) {
-  // const { id } = useParams();
 
   const classes = useStyles();
   const { ...rest } = props;
+  const { enqueueSnackbar } = useSnackbar();
   const [horizontal, setHorizontal] = useState({
     tabsGrid: { xs: 3, sm: 3, md: 3 },
     contentGrid: { xs: 12, sm: 9, md: 9 }
   });
 
-  const [currentUser, setCurrentUser] = useState(getUserSession());
+  
   const [editable, setEditable] = useState(false);
   const [user, setUser] = useState(null);
-  const { id } = props.match.params;
   useEffect(() => {
     if (window.innerWidth >= 768) {
       setHorizontal({
         tabsGrid: { xs: 3, sm: 3, md: 3 },
         contentGrid: { xs: 12, sm: 9, md: 9 }
-      });
+      })
     }
-  }, [id]);
+  }, []);
+  
+  useEffect(() => {
+    const user = getUserSession();
+    setUser(user);
+    setEditable(true)
+  }, []);
+ 
+  // useLayoutEffect(() => {
+  //   async function fetchData() {
+  //     const account = await GetAccount(id)
+  //     if (account != null) {
+  //       if (id == currentUser.publicKey)
+  //       {
+  //         setEditable(true);
+  //         setUser(currentUser)
+  //       }else
+  //       {
+  //         setUser(account)
+  //       }
+          
+  //       //console.log(account)
+        
+  //     }
+  //   }
+  //   fetchData()
+  // }, [id]);
 
-  useLayoutEffect(() => {
-    async function fetchData() {
-      const account = await GetAccount(id);
-      if (account != null) {
-        if (id == currentUser.publicKey) setEditable(true);
-        //console.log(account)
-        setUser(account);
-      }
-    }
-    fetchData();
-  }, [id]);
+   const copyMessage = (val) => {
+    const selBox = document.createElement("textarea");
+    selBox.style.position = "fixed";
+    selBox.style.left = "0";
+    selBox.style.top = "0";
+    selBox.style.opacity = "0";
+    selBox.value = val;
+    document.body.appendChild(selBox);
+    selBox.focus();
+    selBox.select();
+    document.execCommand("copy");
+    document.body.removeChild(selBox);
+  }
+
   return (
     <div>
       <Header
@@ -91,9 +121,15 @@ function Userprofilepage(props) {
         filter
         image={require("assets/img/bg2.jpg")}
       />
-      <div className={classNames(classes.main, classes.mainRaised)}>
-        <div>
-          <div className={classes.container} style={{ "min-height": "500px" }}>
+      <div
+        className={classes.pageHeader}
+        style={{
+          backgroundColor: "white"
+        }}
+      >
+        <div className={classNames(classes.main, classes.mainRaised)}>
+          <div>
+            <div className={classes.container} style={{ "min-height": "500px" }}>
             <GridContainer>
               <GridItem xs={12} sm={12} md={12} lg={12}>
                 <NavPills
@@ -113,15 +149,15 @@ function Userprofilepage(props) {
                           </CardHeader>
                           <CardBody>
                             <DetailsExpansions
-                              name="Username"
-                              value={user && user.Username ? user.Username : ""}
+                              detail="Username"
+                              // userid={user && user.publicKey ? user.publicKey : ""}
+                              data={user && user.username ? user.username : ""}
                               disabled={!editable}
                             />
                             <DetailsExpansions
-                              name="Useremail"
-                              value={
-                                user && user.Useremail ? user.Useremail : ""
-                              }
+                              detail="Useremail"
+                              // userid={user && user.publicKey ? user.publicKey : ""}
+                              data={user && user.useremail ? user.useremail : ""}                              
                               disabled={!editable}
                             />
                           </CardBody>
@@ -129,7 +165,7 @@ function Userprofilepage(props) {
                       )
                     },
                     {
-                      tabButton: "KYC Details",
+                      tabButton: "User Status",
                       tabIcon: SupervisedUserCircleIcon,
                       tabContent: (
                         <Card>
@@ -137,42 +173,59 @@ function Userprofilepage(props) {
                             color="info"
                             className={classes.cardHeader}
                           >
-                            <h4>KYC Details</h4>
+                            <h4>KYC & Campaign Status</h4>
                           </CardHeader>
                           <CardBody>
-                            {user && user.kyc && <p>KYC Status: {user.kyc}</p>}
-                            {editable && user && !user.kyc && (
+                            {user && user.approve == 1 && <p>KYC Status: You are approved, you can create a campaign</p>}
+                            {user && user.approve == 2 && (
+                               <>
+                                <p>KYC Status: You are not approved, the detail you given was wrong, try again?</p>
+                    
+                              <Button
+                                simple
+                                color="info"
+                                onClick={e => {
+                                  props.history.push('/Kycapprove')
+                                }}
+                              >
+                                Do KYC
+                              </Button>
+                            </>
+                            )}
+                            {user && user.approve == 0 && (
                               <>
                                 <p>
-                                  Want to create an initiative or receive funds?
+                                  Do you want to create a campaign?
                                 </p>
                                 <Button
                                   simple
                                   color="info"
                                   onClick={e => {
-                                    props.history.push("/kyc");
+                                    props.history.push('/Kycapprove')
                                   }}
                                 >
                                   Do KYC
                                 </Button>
                               </>
                             )}
-                            {!editable && user && !user.kyc && (
-                              <>
-                                <p>
-                                  Want to create an initiative or receive funds?
-                                </p>
-                                <Button
-                                  simple
-                                  color="info"
-                                  onClick={e => {
-                                    props.history.push("/kyc");
-                                  }}
-                                >
-                                  Do KYC
-                                </Button>
-                              </>
-                            )}
+                             <Divider />
+                             {user && user.campapprove == 1 && <p>Campaign Status: You're Campaign is approved, See the campaigns page </p>}
+                             {user && user.campapprove == 2 && (
+                               <>
+                               <p>
+                                do you want to create a campaign again?
+                               </p>
+                               <Button
+                                 simple
+                                 color="info"
+                                 onClick={e => {
+                                   props.history.push('/Createcampaign')
+                                 }}
+                               >
+                                 Create campaign
+                               </Button>
+                             </>
+                             )}
                           </CardBody>
                         </Card>
                       )
@@ -189,13 +242,20 @@ function Userprofilepage(props) {
                             <h4>Account Details</h4>
                           </CardHeader>
                           <CardBody>
-                            <DetailsExpansions
-                              name="Public Key"
-                              value={
-                                user && user.publicKey ? user.publicKey : ""
-                              }
-                              disabled={!editable}
-                            />
+                            {user && user.publicKey && (
+                                <List component="nav" className={classes.root} aria-label="keypair">
+                                <ListItem>
+                                <ListItemText primary={"Public Key"} />
+                                </ListItem>
+                                <ListItem button onClick={() => {
+                                  copyMessage(user.publicKey.replace(/\'/g, "") );
+                                  enqueueSnackbar("Public key Copied", { variant: "info" })
+                                }}>
+                                  <ListItemText primary={user.publicKey.replace(/\'/g, "") } />
+                                  <FileCopyIcon />
+                                </ListItem> 
+                                </List>
+                            )}
                           </CardBody>
                         </Card>
                       )
@@ -203,12 +263,109 @@ function Userprofilepage(props) {
                     {
                       tabButton: "Balance",
                       tabIcon: ReceiptIcon,
-                      tabContent: <Balance publicKey={id} user={user} />
+                      tabContent:(
+                        <Card>
+                          <CardHeader
+                            color="info"
+                            className={classes.cardHeader}
+                          >
+                            <h4>Balance</h4>
+                          </CardHeader>
+                          <CardBody>
+                          {user && user.balance && (<ListItem>
+                          <ListItemText primary={user.balance + " Lumens"} />
+                          </ListItem>)}
+                          </CardBody>
+                        </Card>
+                      )
                     },
                     {
                       tabButton: "Trasnsactions",
                       tabIcon: ReceiptIcon,
-                      tabContent: <Transactions publicKey={id} user={user} />
+                      tabContent:(
+                        <Card>
+                          <CardHeader
+                            color="info"
+                            className={classes.cardHeader}
+                          >
+                            <h4>Trasnsactions</h4>
+                          </CardHeader>
+                          <CardBody>
+                          {user && user.hasharray.length == 0  &&(<ListItem>
+                          <ListItemText primary={"No Transaction Hash available"} />
+                          </ListItem>)}  
+                         
+                          {user && user.hasharray.length == 1 &&
+                          (<List component="nav" className={classes.root} aria-label="keypair">
+                          <ListItem>
+                          <ListItemText primary={"Last Transaction Hash"} />
+                          </ListItem>
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem> 
+                          </List>
+                          )}
+                          
+                          
+                          {user && user.hasharray.length == 3 &&
+                          (<List component="nav" className={classes.root} aria-label="keypair">
+                          <ListItem>
+                          <ListItemText primary={"Last Two Transaction Hash"} />
+                          </ListItem>
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem>
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 3].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 3].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem>
+                          </List>
+                          )}
+                         
+                          {user && user.hasharray.length >= 5 &&
+                          (<List component="nav" className={classes.root} aria-label="keypair">
+                          <ListItem>
+                          <ListItemText primary={"Last Three Transaction Hash"} />
+                          </ListItem>
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 1].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem> 
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 3].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 3].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem> 
+                          <ListItem button onClick={() => {
+                            copyMessage(user.hasharray[user.hasharray.length - 5].replace(/\'/g, "") );
+                            enqueueSnackbar("Hash Value Copied", { variant: "info" })
+                          }}>
+                            <ListItemText primary={user.hasharray[user.hasharray.length - 5].replace(/\'/g, "") } />
+                            <FileCopyIcon />
+                          </ListItem> 
+                          </List>
+                          )}
+                          
+      
+                          </CardBody>
+                        </Card>
+                      )
                     }
                   ]}
                 />
@@ -218,12 +375,10 @@ function Userprofilepage(props) {
         </div>
       </div>
       <Footer />
+      </div>
     </div>
   );
 }
 
-const authCondition = authUser => !!authUser;
+export default Userprofilepage;
 
-export default withAuthorization(authCondition)(withRouter(Userprofilepage));
-// export default Userprofilepage;
-// export default withRouter(withAuthorization(Userprofilepage));

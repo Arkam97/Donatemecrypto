@@ -70,10 +70,10 @@ function Signin(props) {
           enqueueSnackbar("Signed In Successfully", { variant: "success" });
           props.history.push(props.prevroute); break;
           break;
-        case 201:
-          enqueueSnackbar("Useraccount Not Found", { variant: "warning" });
-          break;
         case 202:
+          enqueueSnackbar("User Account Not Found", { variant: "warning" });
+          break;
+        case 203:
           enqueueSnackbar("Password Is Incorrect", { variant: "error" });
           break;
         case null:
@@ -101,13 +101,13 @@ function Signin(props) {
                   }
                 >
                   <CardHeader color="info" className={classes.cardHeader}>
-                    <h3>Sign In</h3>
+                    <h3>Sign In</h3>  
                   </CardHeader>
                   <CardBody>
-                    <CustomInput
+                  <CustomInput
                       error={usernameError}
-                      labelText="Userusername *"
-                      id="username"
+                      labelText="Username *"
+                      id="Username"
                       formControlProps={{
                         fullWidth: true
                       }}
@@ -118,29 +118,25 @@ function Signin(props) {
                             <People className={classes.inputIconsColor} />
                           </InputAdornment>
                         ),
-                        required: true,
                         onChange: function(e) {
                           setusername(e.target.value);
-                          var ch = /^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-                          //required check
                           setusernameError(
-                            e.target.value !== "" || ch.test(e.target.value)
-                              ? false
-                              : true
+                            e.target.value === "" ? true : false
                           );
-                        }
+                        },
+                        value: username
                       }}
                     />
                     <CustomInput
                       error={pwdError}
-                      labelText="Password *"
-                      id="pwd"
+                      labelText="password *"
+                      id="password"
                       formControlProps={{
                         fullWidth: true
                       }}
                       inputProps={{
-                        type: !showpwd ? "Password" : "text",
+                        type: !showpwd ? "password" : "text",
                         endAdornment: (
                           <InputAdornment position="end">
                             {hoverpwd && (
@@ -178,8 +174,10 @@ function Signin(props) {
                         autoComplete: "off",
                         onChange: function(e) {
                           setpwd(e.target.value);
+
                           setpwdError(e.target.value === "" ? true : false);
-                        }
+                        },
+                        value: pwd
                       }}
                     />
                     {loading && <LinearProgress />}

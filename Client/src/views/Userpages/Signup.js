@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import StellarSdk from "stellar-sdk";
 
+
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
@@ -27,9 +28,8 @@ import Typography from "@material-ui/core/Typography";
 import { useSnackbar } from "notistack";
 import LinearProgress from "@material-ui/core/LinearProgress";
 
-// eslint-disable-next-line no-unused-vars
-// const keyset = StellarSdk.keyset;
-const keysetfrom = StellarSdk.keyset;
+let pair = StellarSdk.Keypair.random();
+// const pair = StellarSdk.Keypair;
 const stylesignup = makeStyles(styles);
 
 function Signup(props) {
@@ -43,8 +43,7 @@ function Signup(props) {
   const [useremail, setuseremail] = useState("");
   const [pwd, setpwd] = useState("");
   const [confirmpwd, setConfirmpwd] = useState("");
-  const [secretKey, setSecretKey] = useState("");
-  const [publicKey, setPublicKey] = useState("");
+
 
   const [loading, setLoading] = useState(false);
   //hover and show
@@ -78,40 +77,37 @@ function Signup(props) {
       useremail !== "" &&
       pwd !== "" &&
       confirmpwd !== "" &&
-      pwd === confirmpwd &&
-      secretKey !== "" &&
-      publicKey !== ""
+      pwd === confirmpwd 
     ) {
       setLoading(true);
       
-      let keyset = keysetfrom.random();
-      setPublicKey(keyset.publicKey());
-      setSecretKey(keyset.secretkey());
+      props.setpublicKey(pair.publicKey());
+      props.setprivatekey(pair.secret());
 
+       let publickey =  pair.publicKey()
       const response = await signup(
         username,
         useremail,
         pwd,
-        confirmpwd,
-        keyset,
+        publickey
       );
       switch (response) {
         case 200:
-          enqueueSnackbar("Siged up Successfully", { variant: "success" });
-          props.setStep('Blockchainkey')
+          enqueueSnackbar("Signed up Successfully", { variant: "success" });
+          props.setaction('Blockchainkey')
           break;
-        case 201:
+        case 202:
           enqueueSnackbar("user email Already Exists", { variant: "warning" });
           setuseremailError(true);
           break;
-        case 202:
+        case 203:
           enqueueSnackbar("username Already Exists", {
             variant: "warning"
           });
           setusernameError(true);
           break;
         case null:
-          enqueueSnackbar("Siged up Failed", { variant: "error" });
+          enqueueSnackbar("Signed up Failed", { variant: "error" });
       }
       setLoading(false);
     }

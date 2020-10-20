@@ -1,12 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path')
 const mongoose = require("mongoose");
 const HttpError = require('./service/http-error');
-const mainroutes = require("./routes/mainroutes.js")
+const userroutes = require("./routes/userroutes.js");
+const fs = require('fs');
 const port = process.env.PORT || 5000;
 const app = express();
 
-app.use(bodyParser.json());
+
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,13 +16,17 @@ app.use((req, res, next) => {
     'Access-Control-Allow-Headers',
     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
   );
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
-
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, PATCH, DELETE');
+    return res.status(200).json();
+  }
   next();
 });
 
-app.use('/api', mainroutes);
-// app.get('/', (req, res) => res.send('Hello World!'))
+app.use(bodyParser.json());
+app.use('/public', express.static('public'));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api', userroutes);
 
 app.use((req, res, next) => {
   const error = new HttpError('Could not find this route.', 404);
@@ -28,6 +34,11 @@ app.use((req, res, next) => {
 });
 
 app.use((error, req, res, next) => {
+  if(req.file){
+    fs.unlink(req.file.filename, err =>{
+      console.log(err);
+    });
+  }
   if (res.headerSent) {
     return next(error);
   }

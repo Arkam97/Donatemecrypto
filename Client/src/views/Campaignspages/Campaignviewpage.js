@@ -1,6 +1,8 @@
 /* eslint-disable react/prop-types */
+
 import React, { useEffect, useState, useLayoutEffect } from "react";
 import { useSnackbar } from "notistack";
+
 
 import classNames from "classnames";
 import { makeStyles } from "@material-ui/core/styles";
@@ -12,10 +14,11 @@ import CardContent from "@material-ui/core/CardContent";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import Divider from "@material-ui/core/Divider";
-import { getcampaignbyid } from "services/KnowledgeManagement.js";
+import { getcampaignbyid } from "utility/Usercontrol";
 import LinearProgress from "@material-ui/core/LinearProgress";
-
-// core components
+import AttachMoneyIcon from "@material-ui/icons/AttachMoney";
+import VpnKeyIcon from '@material-ui/icons/VpnKey';
+import InputAdornment from "@material-ui/core/InputAdornment";
 import Header from "components/Header/Header.js";
 import Footer from "components/Footer/Footer.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -24,38 +27,39 @@ import HeaderLinks from "components/Header/HeaderLinks.js";
 import NavPills from "components/NavPills/NavPills.js";
 import Parallax from "components/Parallax/Parallax.js";
 import CampaignItem from "./CampaignItem";
-import FundPage from "./Sections/FundPage.js";
 
-import { getUserSession } from "services/UserManagement.js";
-import sidebar from "assets/img/sidebar.png";
-import FavoriteIcon from "@material-ui/icons/Favorite";
+import CustomInput from "components/CustomInput/CustomInput.js";
+import { getUserSession } from "utility/Usercontrol";
 import { Line } from "rc-progress";
-
+import { MakeFundTransaction } from "utility/Usercontrol";
 import styles from "assets/jss/material-kit-react/views/profilePage.js";
-import { StellarUrl } from "variables/constants";
-import StellarSdk from "stellar-sdk";
 import Badge from "components/Badge/Badge.js";
-let lifeCount = 0;
-let dollarCount = 0;
+
+const jwt = require("jsonwebtoken");
 const useStyles = makeStyles(styles);
-export default function SingleBeneficiariesPage(props) {
-  var server = new StellarSdk.Server(StellarUrl);
-  var lastCursor = 0; // or load where you left off
 
-  const { campaignid } = props.match.params;
-  const [received, setReceived] = useState([]);
-  const [life, setLife] = useState(0);
-  const [dollars, setDollars] = useState(0);
 
+
+export default function Fundcampaign(props) {
+
+
+  const { id } = props.match.params;
+  const [colected, setcolected] = useState(0);
+  const [fundamount, setfundamount] = useState("");
+  const [secretkey, setsecretkey] = useState("");
+ 
   // eslint-disable-next-line no-unused-vars
   const [user, setUser] = useState(getUserSession());
 
   const classes = useStyles();
   const { ...rest } = props;
   const [loading, setLoading] = useState(false);
+  const [Transactionloading, setTransactionLoading] = useState(false);
   const [campaign, setcampaign] = useState(null);
-
+  const [fundamountError, setfundamountError] = useState(false);
+  const [secretkeyError, setsecretkeyError] = useState(false);
   const [endDate, setEndDate] = useState(new Date().getTime());
+  const [dontshow, setdontshow] = useState(true);
 
   const [timer, setTimer] = useState("Evaluating Remaining Time");
   const { enqueueSnackbar } = useSnackbar();
@@ -75,87 +79,79 @@ export default function SingleBeneficiariesPage(props) {
       setTimer("Ended");
     }
   };
+
+  
   useEffect(() => {
     async function fetch() {
       setLoading(true);
       setTimer("Evaluating Remaining Time");
-      const init = await getcampaignbyid(campaignid);
-      if (init !== null) {
+      const init = await getcampaignbyid(id);
+      if (init !== null) 
+      {
         setcampaign(init);
-        setEndDate(new Date(init.endDate).getTime());
-        server
-          .payments()
-          .forAccount(init.recipient)
-          .cursor(lastCursor)
-          .stream({
-            onmessage: txResponse => {
-              var arrReceived = received;
-              if (
-                txResponse.type == "payment" &&
-                txResponse.to == init.recipient
-              ) {
-                console.log(txResponse);
-
-                arrReceived.push(txResponse);
-                if (txResponse.asset_code == "LIFE") {
-                  setLife(parseInt(txResponse.amount) + lifeCount);
-                  lifeCount = parseInt(txResponse.amount) + lifeCount;
-
-                  setDollars(parseInt(txResponse.amount) + dollarCount);
-                  dollarCount = parseInt(txResponse.amount) + dollarCount;
-                  // setLife(life + parseInt(txResponse.amount));
-                }
-              }
-              setReceived(arrReceived);
-            }
-          });
-
-        server
-          .payments()
-          .forAccount(init.recipient)
-          .cursor("now")
-          .stream({
-            onmessage: txResponse => {
-              if (
-                txResponse.type == "payment" &&
-                txResponse.to == init.recipient
-              ) {
-                enqueueSnackbar(
-                  txResponse.from +
-                    " funded " +
-                    txResponse.amount +
-                    " " +
-                    txResponse.asset_code,
-                  { variant: "info" }
-                );
-              }
-            }
-          });
+        setEndDate(new Date(init.targetdate).getTime()); 
+        setcolected(init.collect);     
       }
+
+      if(user)
+      {
+            if(init.userid == user.publicKey)
+            {
+            setdontshow(false);
+            }
+      }
+
       setLoading(false);
       setTimer("Evaluating Remaining Time");
     }
 
     fetch();
-  }, [campaignid]);
+  }, [id]);
 
   useLayoutEffect(() => {
     const Sid = setInterval(county, 1000);
     return () => clearInterval(Sid);
   }, [county]);
+
+  const Fundcampaign = async event => {
+    
+
+    setfundamountError(fundamount === "" ? true : false);
+    setsecretkeyError(secretkey === "" ? true : false);
+
+    if ( fundamount !== "" && secretkey !== "") 
+      {
+      setTransactionLoading(true);
+
+      const response = await MakeFundTransaction(fundamount ,secretkey, user.publicKey , campaign.userid , campaign._id, campaign.collect, campaign.amount);
+      switch (response) {
+        case 200:
+          enqueueSnackbar("Amount Funded Successfully", { variant: "success" });
+          props.history.push('/'); 
+          break;
+        case 202:
+          enqueueSnackbar("Account balance not enough", { variant: "warning" });
+          break;
+        case 203:
+          enqueueSnackbar("The balance goal amount less than requested", { variant: "warning" });
+          break;
+        case null:
+          enqueueSnackbar("Transaction Failed", { variant: "error" });
+      }
+    
+ 
+      setTransactionLoading(false);
+  
+    event.persist();
+    }
+    
+  };
+
   return (
     <div>
       <Header
         color="white"
-        brand={
-          <img
-            height="50px"
-            src={sidebar}
-            onClick={() => {
-              props.history.push("/");
-            }}
-          ></img>
-        }
+        brand="Donatemecrypto"
         rightLinks={<HeaderLinks />}
         fixed
         changeColorOnScroll={{
@@ -187,35 +183,21 @@ export default function SingleBeneficiariesPage(props) {
                             campaign_name={campaign.campaignname}
                             campaign_image={campaign.image}
                             campaign_story={campaign.story}
-                          />
+                            camapign_likes={campaign.likecount} 
+                                                     
+                            />
                         </GridItem>
                         <GridItem xs={12} sm={8} md={8} lg={9}>
                           <Card className={classes.root}>
                             <CardContent>
                               <GridContainer>
-                                <GridItem xs={12} sm={12} md={6} lg={6}>
+                                <GridItem xs={12} sm={12} md={12} lg={12}>
                                   <Typography
-                                    align="left"
+                                    align="center"
                                     variant="overline"
                                     component="h2"
                                   >
-                                    {received && received.length > 0 ? (
-                                      <Badge color={"success"}>
-                                        {received.length +
-                                          (received.length == 1
-                                            ? " Donation Received"
-                                            : " Donations Received")}
-                                      </Badge>
-                                    ) : null}
-                                  </Typography>
-                                </GridItem>
-                                <GridItem xs={12} sm={12} md={6} lg={6}>
-                                  <Typography
-                                    align="right"
-                                    variant="overline"
-                                    component="h2"
-                                  >
-                                    <Badge color={"danger"}>{timer}</Badge>
+                                    <Badge color={"success"}>{timer}</Badge>
                                   </Typography>
                                 </GridItem>
                                 <GridItem xs={12} sm={12} md={12} lg={12}>
@@ -225,108 +207,107 @@ export default function SingleBeneficiariesPage(props) {
                                     component="h2"
                                   >
                                     {"$" +
-                                      dollars +
+                                      colected +
                                       " out of $" +
-                                      campaign.goal +
+                                      campaign.amount +
                                       " collected!"}
                                     <Line
-                                      percent={(dollars / campaign.goal) * 100}
+                                      percent={(colected / campaign.amount) * 100}
                                       strokeWidth="1.5"
                                       strokeColor="green"
                                     />
                                   </Typography>
                                 </GridItem>
-                                <GridItem xs={12} sm={12} md={12} lg={12}>
-                                  <Typography
-                                    align="center"
-                                    variant="overline"
-                                    component="h2"
-                                  >
-                                    <Badge>{life + " LIFE Tokens"}</Badge>
-                                  </Typography>
-                                </GridItem>
+          
                                 <GridItem xs={12} sm={12} md={12} lg={12}>
                                   <Typography
                                     variant="body1"
                                     color="textSecondary"
                                     component="p"
                                   >
-                                    {campaign.Story}
+                                    {campaign.story}
                                   </Typography>
                                 </GridItem>
-                              </GridContainer>
-
-                              {user && timer != "Ended" && (
-                                <>
-                                  <Typography
-                                    gutterBottom
-                                    variant="overline"
-                                    component="h2"
-                                  >
-                                    Feeling Charitable? Give Life!
-                                  </Typography>
-                                  <NavPills
-                                    color="primary"
-                                    tabs={[
-                                      {
-                                        tabButton: "LIFE",
-                                        tabIcon: FavoriteIcon,
-                                        tabContent: (
-                                          <FundPage
-                                            campaign={campaign}
-                                            coin={"LIFE"}
-                                            rate={1}
-                                          />
-                                        )
+                                </GridContainer>
+                                {user && timer != "Ended" && dontshow && campaign.amount != colected &&(<>
+                                <form
+                                className={classes.form}
+                                onSubmit={Fundcampaign}
+                                style={
+                                  loading
+                                    ? {
+                                        filter: "blur(1px)",
+                                        "-webkit-filter": "blur(1px)"
                                       }
-                                    ]}
-                                  />
-                                </>
-                              )}
+                                    : null
+                                }
+                                >
+                                  
+
+                                    <GridItem xs={12} sm={12} md={6} lg={6}>
+                                      <CustomInput
+                                        error={fundamountError}
+                                        labelText="amount *"
+                                        id="amount"
+                                        formControlProps={{
+                                          fullWidth: true
+                                        }}
+                                        inputProps={{
+                                          type: "text",
+                                          endAdornment: (
+                                            <InputAdornment position="end">
+                                              <AttachMoneyIcon
+                                                className={classes.inputIconsColor}
+                                              />
+                                            </InputAdornment>
+                                          ),
+                                          required: true,
+                                          onChange: function(e) {
+                                            setfundamount(e.target.value);
+
+                                            setfundamountError(
+                                              e.target.value === "" ? true : false
+                                            );
+                                          }
+                                        }}
+                                      />
+                                    </GridItem>
+                                    <GridItem xs={12} sm={12} md={6} lg={6}>
+                                      <CustomInput
+                                          error={secretkeyError}
+                                          labelText="Secret Key *"
+                                          id="secret"
+                                          formControlProps={{
+                                              fullWidth: true
+                                          }}
+                                          inputProps={{
+                                              type: "password", endAdornment: (
+                                                  <InputAdornment position="end">
+                                                      <VpnKeyIcon className={classes.inputIconsColor} />
+                                                  </InputAdornment>
+                                              ), 
+                                              required: true, 
+                                              // value: password,
+                                              onChange: function (e) {
+                                                setsecretkeyError(e.target.value == "" ? true : false);
+                                                setsecretkey(e.target.value)
+                                              }
+                                          }}
+                                      />
+                                    </GridItem>
+                                    {Transactionloading && <LinearProgress />}
+                                    <Button
+                                      size="small"
+                                      color="primary"
+                                      type={"submit"}
+                                      onClick={Fundcampaign}
+                                      disabled={Transactionloading}
+                                    >
+                                      Fund campaign
+                                    </Button> 
+                                    </form>
+                                    </>)}
                             </CardContent>
-
-                            <CardActions>
-                              {campaign.creator != campaign.recipient && (
-                                <Button
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => {
-                                    props.history.push(
-                                      "/profile/" + campaign.recipient
-                                    );
-                                  }}
-                                >
-                                  View Recipient Profile
-                                </Button>
-                              )}
-                              <Button
-                                size="small"
-                                color="primary"
-                                onClick={() => {
-                                  props.history.push(
-                                    "/profile/" + campaign.creator
-                                  );
-                                }}
-                              >
-                                View Creator Profile
-                              </Button>
-
-                              {!user && (
-                                <Button
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => {
-                                    props.history.push(
-                                      `/auth?from=${btoa(
-                                        props.location.pathname
-                                      )}`
-                                    );
-                                  }}
-                                >
-                                  Fund campaign
-                                </Button>
-                              )}
-                            </CardActions>
                             <Divider />
                           </Card>
                         </GridItem>

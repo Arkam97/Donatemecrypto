@@ -15,7 +15,7 @@ import AddIcon from '@material-ui/icons/Add';
 // core components
 import CustomDropdown from "components/CustomDropdown/CustomDropdown.js";
 import Button from "components/CustomButtons/Button.js";
-import { getUserSession } from "utility/Usercontrol";
+import {getUserSession } from "../../utility/Usercontrol";
 
 import styles from "assets/jss/material-kit-react/components/headerLinksStyle.js";
 
@@ -24,6 +24,7 @@ const useStyles = makeStyles(styles);
 function HeaderLinks(props) {
   const classes = useStyles();
   const [user, setUser] = useState(null);
+
 
   useEffect(() => {
     const user = getUserSession();
@@ -49,7 +50,7 @@ function HeaderLinks(props) {
           color="transparent"
         >Campaigns</Button>
       </ListItem>
-      {user && user.verified ?
+      {user && user.approve == 1?
         <ListItem className={classes.listItem}>
           <Button
             className={classes.navLink}
@@ -61,9 +62,10 @@ function HeaderLinks(props) {
           Create Campaign</Button>
         </ListItem>
         : null}
+      {user && user.type == "admin" ?
           <ListItem className={classes.listItem}>
           <Button
-            className={classes.registerNavLink}
+            className={classes.navLink}
             onClick={e => e.preventDefault()}
             color="transparent"
             round onClick={() => {
@@ -73,7 +75,7 @@ function HeaderLinks(props) {
             Admin Panel
                   </Button>
         </ListItem>    
-
+      : null}
       {user ? 
          <ListItem className={classes.listItem}>
           <CustomDropdown
@@ -85,7 +87,10 @@ function HeaderLinks(props) {
             buttonProps={{
               className:
                 classes.navLink + " " + classes.imageDropdownButton,
-              color: "info"
+              color: "transparent"
+            }}
+            hoverColor={{
+              color: "primary"
             }}
             dropdownList={[
               <h6
@@ -97,14 +102,8 @@ function HeaderLinks(props) {
               ,
               <span
                 onClick={() => {
-                  props.history.push("/wallet/" + user.publicKey)
-                }} className={classes.navLink}
-              >Wallet
-                  </span>,
-              <span
-                onClick={() => {
                   localStorage.removeItem("token")
-                  props.history.push("/Signin")
+                  props.history.push("/main")
                 }} className={classes.navLink}
               >Logout
                     </span>

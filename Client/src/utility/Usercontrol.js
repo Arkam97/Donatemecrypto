@@ -1,62 +1,35 @@
 import axios from "axios";
-import {
-  dappBackend,
-  StellarUrl,
-  StellarNetwork,
-  HUMANIssuerPublicKey,
-  HUMANDistributorPublicKey
-} from "variables/constants";
-import { AES, enc } from "crypto-js";
 import sha256 from "sha256";
 import StellarSdk from "stellar-sdk";
-const Keypair = StellarSdk.Keypair;
-const Asset = StellarSdk.Asset;
-StellarSdk.Network.useTestNetwork();
-const jwt = require("jsonwebtoken");
 
-export function hashEmail(email) {
-  return sha256(email);
+const jwt = require("jsonwebtoken");
+var FormData = require("form-data");
+var util = require('util');
+
+export function hashvalue(value) {
+  return sha256(value);
 }
-export function decryptSecret(secret, signer) {
+
+export async function signin(username, pwd) {
   try {
-    const decrypted = AES.decrypt(secret, signer);
-    const plaintext = decrypted.toString(enc.Utf8);
-    return plaintext;
-  } catch (error) {
-    return null;
-  }
-}
-export function encyrptSecret(secret, signer) {
-  try {
-    const ciphertext = AES.encrypt(secret, signer);
-    return ciphertext.toString();
-  } catch (error) {
-    return null;
-  }
-}
-export async function signin(key, password) {
-  try {
-    let pash = hashEmail(password);
-    //console.log(pash)
+    let hashpwd = hashvalue(pwd);
     let postBody = {
-      key: key.toLowerCase(),
-      password: pash
+      username: username,
+      hashpwd: hashpwd
     };
-    const res = await axios.post(dappBackend + "/login", postBody, {
+    console.log(postBody);
+    const res = await axios.post('http://localhost:5000/api/signin', postBody, {
       headers: {
-        // 'Authorization': "bearer " + token,
         "Content-Type": "application/json"
       }
     });
 
     if (res != null) {
-      if (res.status === 200) {
-        // store.dispatch({
-        //   type: "ADD_USER",
-        //   text: "validating credentials"
-        // });
-        // localStorage.setItem("keypair", JSON.stringify(keypair))
-        localStorage.setItem("token", res.data.data.token);
+      if (res.status === 200)
+      {
+        const  token  = res.data;
+        console.log(token);
+        localStorage.setItem("token",token);
         return res.status;
       } else {
         return res.status;
@@ -69,170 +42,139 @@ export async function signin(key, password) {
   }
 }
 
-export async function signup(
-  alias,
-  email,
-  password,
-  keypair
-) {
+
+export async function friendbotaccount(pubkey)
+{
   try {
-    let publicKey = keypair.publicKey();
 
-    let pash = "";
-    let encryptedSecret = "";
+    let Accountassets = [];  
+    const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
+
+      const response = await axios.get(
+      `https://friendbot.stellar.org?addr=${encodeURIComponent(
+        pubkey,
+        )}`,
+      );
+  
+      if(response.status === 200)
+      {
+        const account = await server.loadAccount(pubkey);
+        
+        account.balances.forEach(function (balance) {
+          let bal = parseFloat(balance.balance)
+          Accountassets.push({'balance': bal.toFixed(0)})
+        });
+
+        return Accountassets[0].balance;
+      }
+    
+    } catch (err) {
+      return null;
+  }
+}
+
+export async function getaccountbalance(publicKey)
+{
+  try{
+        let Accountassets = [];    
+        const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
+        
+        const account = await server.loadAccount(publicKey);
+        
+        if (account === null) {
+          console.log("Account not found");
+          return null;
+        }
+
+        account.balances.forEach(function (balance) {
+          let bal = parseFloat(balance.balance)
+          Accountassets.push({'balance': bal.toFixed(0)})
+        });
+
+        return Accountassets[0].balance;
+
+  }catch(err)
+  {
+    return null;
+  }
+}
 
 
-    if (password != "" ) {
-      pash = hashEmail(password);
-      encryptedSecret = encyrptSecret(keypair.secret(), pash);
-    }
+
+export async function signup( username, useremail,pwd,publickey) {
+  try {
+
+    let hashpwd = hashvalue(pwd);
+
+    const bal = await friendbotaccount(publickey);
 
     let postBody = {
-      alias: alias.toLowerCase(),
-      email: email != "" ? email.toLowerCase() : "",
-      publicKey: publicKey,
-      encryptedSecret: encryptedSecret
-    };
+      username: username,
+      useremail: useremail,
+      hashpwd:hashpwd,
+      publicKey: publickey,
+      balance: bal,
+      approve : 0,
+      campapprove : 0,
+      count: 0,
+      type : "user"
+    };  
 
-    await fundAccount(publicKey);
-    // await AddHumanSigner(keypair);
-
-    const res = await axios.post('http://localhost:5000/api/register', postBody, {
+    const res = await axios.post('http://localhost:5000/api/signup',postBody, {
       headers: {
-        // 'Authorization': "bearer " + token,
         "Content-Type": "application/json"
       }
     });
 
     if (res !== null) {
       if (res.status === 200) {
-        ////console.log("Success:" + res.data.data.token)
-        localStorage.setItem("token", res.data.data.token);
-
+        const  token   = res.data;
+        console.log(token);
+        localStorage.setItem("token",token);
         return res.status;
-      } else {
-        // ////console.log("already: " + res.status)
+      }
+      else {
         return res.status;
       }
     } else {
       return null;
     }
-  } catch (err) {
-    // ////console.log(err)
-    return null;
-  }
-}
-export async function fundAccount(publicKey) {
-  try {
-    if (StellarNetwork === "TestNet") {
-      const STELLAT_FRIEND_BOT_URL = `https://friendbot.stellar.org/?addr=`;
-      const stellarResponse = await axios.get(
-        `${STELLAT_FRIEND_BOT_URL}${publicKey}`
-      );
-
-      if (stellarResponse !== null && stellarResponse.status !== 200) {
-        return null;
-      }
-      return true;
-    }
+    
   } catch (err) {
     return null;
   }
 }
-// export async function AddHumanSigner(keypair) {
-//   try {
-//     var server = new StellarSdk.Server(StellarUrl);
-//     const sourceAccount = await server.loadAccount(keypair.publicKey());
-//     if (sourceAccount === null) {
-//       return null;
-//     }
-//     const humanAccount = await server.loadAccount(HUMANDistributorPublicKey);
-//     if (humanAccount === null) {
-//       return null;
-//     }
-//     let transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-//       fee: StellarSdk.BASE_FEE,
-//       networkPassphrase: StellarSdk.Networks.TESTNET
-//     })
-//       .addOperation(
-//         StellarSdk.Operation.changeTrust({
-//           // Because Stellar allows transaction in many currencies, you must
-//           // specify the asset type. The special "native" asset represents Lumens.
-//           asset: new Asset("LIFE", HUMANIssuerPublicKey),
-//           // limit: "",
-//           source: keypair.publicKey()
-//         })
-//       )
-//       .addOperation(
-//         StellarSdk.Operation.setOptions({
-//           signer: {
-//             ed25519PublicKey: HUMANDistributorPublicKey,
-//             weight: 1
-//           }
-//         })
-//       )
-//       .addOperation(
-//         StellarSdk.Operation.setOptions({
-//           lowThreshold: 2,
-//           medThreshold: 2,
-//           highThreshold: 2
-//         })
-//       )
-//       // .addMemo(StellarSdk.Memo.text(user.name))
-//       .build();
-//     // Sign the transaction to prove you are actually the person sending it.
-//     transaction.sign(keypair);
-//     // And finally, send it off to Stellar!
-//     const transactionResponse = await server.submitTransaction(transaction);
-//     if (transactionResponse === null) {
-//       return null;
-//     }
-//     return 200;
-//   } catch (e) {
-//     //console.log(e)
-//     return null;
-//   }
-// }
-export async function addKyc(kycModel) {
-  try {
-    let token;
-    if (localStorage.getItem("token") != null) {
-      token = localStorage.getItem("token");
-    }
-    let postBody = kycModel;
-    const res = await axios.post(dappBackend + "/kyc", postBody, {
-      headers: {
-        Authorization: "bearer " + token,
-        "Content-Type": "application/json"
-      }
-    });
 
-    if (res == null) {
+export function getUserSession() {
+  if (localStorage.getItem("token") !== null) {
+    const decodedToken = jwt.decode(localStorage.getItem("token"));
+    if (decodedToken === null) {
       return null;
+    } else {
+       return decodedToken.tokenBody;      
     }
-    return res.status;
-  } catch (err) {
-    return null;
   }
 }
+
 export async function GetAccount(publicKey) {
   try {
     let token;
     if (localStorage.getItem("token") != null) {
       token = localStorage.getItem("token");
     }
-    const res = await axios.get(dappBackend + "/users/" + publicKey, {
+    const res = await axios.get( ` http://localhost:5000/api/users/${publicKey} `, {
       headers: {
-        Authorization: "bearer " + token,
+        'Authorization': "bearer " + token,
         "Content-Type": "application/json"
       }
     });
 
     if (res != null) {
       if (res.status === 200) {
-        return res.data.data;
+        // console.log(res);
+        return res;
       } else {
-        return res.data.data;
+        return res;
       }
     } else {
       return null;
@@ -242,26 +184,111 @@ export async function GetAccount(publicKey) {
   }
 }
 
-export async function SearchOrGetAccounts(Key) {
+export async function createKyc(nid,birthdate,front,back,facefront,offletter,fname,telno,addressone,addresstwo) {
   try {
+    let user = getUserSession();
+    let userid = user.publicKey;
+
+    let Kycapprove = 0;
+
     let token;
     if (localStorage.getItem("token") != null) {
       token = localStorage.getItem("token");
     }
+    const formData = new FormData();
+    formData.append("nid",nid); 
+    formData.append("birthdate",birthdate); 
+    formData.append("image",front); 
+    formData.append("image",back); 
+    formData.append("image",facefront); 
+    formData.append("image",offletter); 
+    formData.append("fname",fname); 
+    formData.append("telno",telno); 
+    formData.append("addressone",addressone); 
+    formData.append("addresstwo",addresstwo);
+    formData.append("userid",userid);
+    formData.append("Kycapprove",Kycapprove);
 
-    const query = Key == "" ? "?key=" + Key : "";
-    const res = await axios.get(dappBackend + "/users" + query, {
+    console.log("for "+formData)
+
+    const res = await axios.post( 'http://localhost:5000/api/createkyc',formData,
+    {
+      headers: {
+        'Authorization': "bearer " + token,
+        "Content-Type": "multipart/form-data",
+      }
+    });
+
+    if (res == null) {
+      return null
+    }
+    return res.status;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function addcampaign( image,campaignname, amount, story,targetdate,) {
+  try {
+    let user = getUserSession();
+    let token;
+    if (localStorage.getItem("token") != null) {
+      token = localStorage.getItem("token");
+    }
+    const userid = user.publicKey;
+    const Campapprove = 0;
+    const collect = 0;
+    const likecount= 0;
+
+    const form = new FormData();
+    form.append("userid",userid); 
+    form.append("image",image); 
+    form.append("campaignname",campaignname); 
+    form.append("amount",amount); 
+    form.append("story",story); 
+    form.append("targetdate",targetdate);
+    form.append("Campapprove",Campapprove);
+    form.append("collect",collect);
+    form.append("likecount",likecount);
+
+    const res = await axios.post('http://localhost:5000/api/createcampaign', form, 
+    {
       headers: {
         Authorization: "bearer " + token,
-        "Content-Type": "application/json"
+        "Content-Type": "multipart/form-data",
       }
     });
 
     if (res != null) {
-      if (res.status === 200) {
-        return res.data.data;
+      if (res.status == 200) {
+        return res;
       } else {
-        return res.data.data;
+        return res;
+      }
+    } else {
+      return null;
+    }
+  } catch (err) {
+    //console.log(err);
+    return null;
+  }
+}
+
+export async function getallunapprovedcampaigns() {
+  try {
+    const response = await axios.get('http://localhost:5000/api/getall_unapproved_campaigns', {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    console.log(response);
+
+    if (response != null) {
+      switch (response.status) {
+        case 200:
+          return response.data;
+        case 201:
+          return null;
       }
     } else {
       return null;
@@ -271,115 +298,252 @@ export async function SearchOrGetAccounts(Key) {
   }
 }
 
-export async function getWalletBalance(publicKey) {
+export async function getallapprovedcampaigns() {
   try {
-    let assets = [];
+    const response = await axios.get('http://localhost:5000/api/getall_approved_campaigns', {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    console.log(response);
 
-    var server = new StellarSdk.Server(StellarUrl);
-    // the JS SDK uses promises for most actions, such as retrieving an account
-    const account = await server.loadAccount(publicKey);
-    if (account === null) {
+    if (response != null) {
+      switch (response.status) {
+        case 200:
+          return response.data;
+        case 201:
+          return null;
+      }
+    } else {
       return null;
     }
-    account.balances.forEach(function(balance) {
-      // @ts-ignore
-      // //////console.log('Asset_code:', balance.asset_code, ', Balance:', balance.balance);
-      let bal = parseFloat(balance.balance);
-      let lim = parseFloat(balance.limit);
-
-      // @ts-ignore
-      assets.push({
-        assetCode: balance.asset_code,
-        balance: bal.toFixed(0),
-        limit: lim.toFixed(0)
-      });
-    });
-    // assets.pop();
-    //////console.log(assets)
-    return assets;
   } catch (err) {
     return null;
   }
 }
-export function getUserSession() {
-  if (localStorage.getItem("token") !== null) {
-    // jwt.decode(localStorage.getItem("token"))
-    const decodedToken = jwt.decode(localStorage.getItem("token"));
-    if (decodedToken === null) {
-      return null;
+
+export async function getallunapprovedKycs() {
+  try {
+    const response = await axios.get('http://localhost:5000/api/getall_unapproved_Kycs', {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    // console.log(response);
+
+    if (response != null) {
+      switch (response.status) {
+        case 200:
+          return response.data;
+        case 201:
+          return null;
+      }
     } else {
-      // //////console.log(decodedToken)
-      return decodedToken;
+      return null;
     }
+  } catch (err) {
+    return null;
   }
 }
-// export async function TransferFund(
-//   DestinationPublicKey,
-//   Amount,
-//   keypair,
-//   sender,
-//   assetName
-// ) {
-//   try {
-//     var server = new StellarSdk.Server(StellarUrl);
 
-//     const sourceAccount = await server.loadAccount(keypair.publicKey());
-//     if (sourceAccount === null) {
-//       return null;
-//     }
-//     let transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-//       fee: StellarSdk.BASE_FEE,
-//       networkPassphrase: StellarSdk.Networks.TESTNET
-//     })
-//       .addOperation(
-//         StellarSdk.Operation.payment({
-//           destination: HUMANDistributorPublicKey,
-//           asset: StellarSdk.Asset.native(),
-//           amount: Amount
-//         })
-//       )
-//       .addOperation(
-//         StellarSdk.Operation.payment({
-//           destination: keypair.publicKey(),
-//           asset: new Asset(assetName, HUMANIssuerPublicKey),
-//           amount: Amount,
-//           source: HUMANDistributorPublicKey
-//         })
-//       )
-//       .addOperation(
-//         StellarSdk.Operation.payment({
-//           destination: DestinationPublicKey,
-//           asset: new Asset(assetName, HUMANIssuerPublicKey),
-//           amount: Amount
-//         })
-//       )
-//       .addMemo(StellarSdk.Memo.text(sender))
-//       .build();
-//     // Sign the transaction to prove you are actually the person sending it.
-//     transaction.sign(keypair);
+export async function getallendcampaigns() {
+  try {
+    const response = await axios.get('http://localhost:5000/api/getall_ended_campaigns', {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    // console.log(response);
 
-//     //console.log(transaction.toEnvelope().toXDR('base64'))
-//     let token;
-//     if (localStorage.getItem("token") != null) {
-//       token = localStorage.getItem("token");
-//     }
+    if (response != null) {
+      switch (response.status) {
+        case 200:
+          return response.data;
+        case 201:
+          return null;
+      }
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return null;
+  }
+}
 
-//     const res = await axios.post(
-//       dappBackend + "/transactions/fund",
-//       { xdr: transaction.toEnvelope().toXDR("base64") },
-//       {
-//         headers: {
-//           Authorization: "bearer " + token,
-//           "Content-Type": "application/json"
-//         }
-//       }
-//     );
 
-//     //console.log(res)
-//     return res.status;
-//   } catch (e) {
-//     //console.log(e)
-//     return null;
-//   }
-// }
+export async function getcampaignbyid(id) {
+  try {
+    const response = await axios.get(`http://localhost:5000/api/campaign/${id}`, {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    console.log(response);
 
+    if (response != null) {
+      switch (response.status) {
+        case 200:
+          return response.data;
+          
+        case 201:
+          return null;
+      }
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function edituserdetails(data,userid,detail)
+{
+  console.log("print" + data);
+    try
+  {
+    let postBody = {
+      data : data,
+      userid: userid,
+      detail: detail,
+      
+    };  
+    const response = await axios.post('http://localhost:5000/api/edituser',postBody, {
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if(response.status == 200)
+    {
+      const  token   = response.data;
+      localStorage.setItem("token",token);
+      return response.status;
+    }
+    else {
+      return null;
+    }
+  }
+  catch(err)
+  {
+    return null
+  }
+}
+
+
+export async function MakeFundTransaction(amount,sendersecretkey, senderpublickey , reciverpublickey, campaignid, collected, target) {
+
+  try {
+    const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+
+    var sourceKeys = StellarSdk.Keypair.fromSecret(sendersecretkey);
+
+        if(sourceKeys === null)
+        {
+          return null;
+        }
+
+    const Account_A  = await server.loadAccount(senderpublickey);
+
+        if (Account_A === null) {
+            console.log("sourceAccount not found");
+            return null;
+        }
+    
+        const accballance = await getaccountbalance(senderpublickey); 
+        const accballfloat = parseFloat(accballance)
+
+        const floatamount = parseFloat(amount);
+        console.log("here floatamount :"+floatamount);
+
+        if(floatamount > accballfloat)
+        {
+          console.log("not enough money ur request to "+floatamount+" but u have "+accballfloat);
+          return 202;
+        }
+        
+    const Account_B = await server.loadAccount(reciverpublickey);
+    
+        if (Account_B === null) {
+          console.log("reciverAccount not found")
+          return null
+        }   
+
+    const total = floatamount + parseFloat(collected);
+    const floattarget = parseFloat(target);         
+    
+        if(total > floattarget)
+            {
+              console.log("the amount u have entered is grater than total");
+              return 203;
+            } 
+        let transaction = new StellarSdk.TransactionBuilder(Account_A, {
+            fee: StellarSdk.BASE_FEE,
+            networkPassphrase: StellarSdk.Networks.TESTNET
+          })
+          .addOperation(StellarSdk.Operation.payment({
+            destination: reciverpublickey,
+            asset: StellarSdk.Asset.native(),
+            amount: amount,
+          }))
+          .setTimeout()
+          .build();
+          
+          transaction.sign(sourceKeys);
+          
+          const transactionResponse = await server.submitTransaction(transaction).then(function (accountResult) {
+            return util.inspect(accountResult.hash,false,null);
+          })
+          .catch(function (err) {
+            console.error(err);
+          });
+
+          const accbal = await getaccountbalance(senderpublickey);
+
+          let token;
+          if (localStorage.getItem("token") != null) 
+          {
+            token = localStorage.getItem("token");
+          }
+          const responseone = await axios.post('http://localhost:5000/api/setbalance',{
+            balance : accbal,
+            publicKey : senderpublickey,
+            hasharray: transactionResponse,
+          }, {
+            headers: {
+              'Authorization': "bearer " + token,
+              "Content-Type": "application/json"
+            }
+          });
+          
+          const setcollect = floatamount + parseFloat(collected); 
+
+          const responsetwo = await axios.post('http://localhost:5000/api/setcolectedamount',{           
+           _id : campaignid,  
+          collect :  setcollect,
+
+          }, {
+            headers: {
+              'Authorization': "bearer " + token,
+              "Content-Type": "application/json"
+            }
+          });
+
+          console.log("success");
+
+          if (transactionResponse != null && responseone != null && responsetwo != null && 
+                responseone.status == 200 && responsetwo.status == 200 ) 
+          {
+            const  token   = responseone.data;
+            localStorage.setItem("token",token);
+            return responseone.status;
+          }
+          // else
+          // {
+          //   return null;
+          // }
+
+  } catch (error) {
+    return null
+
+  }
+}

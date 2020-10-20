@@ -11,6 +11,8 @@ import CampaignList from "views/Campaignspages/CamapignList";
 import Adminpage from "views/AdminPanel/Adminpage";
 import Userprofile from "views/Userprofile/Userprofilepage";
 import Mainpage from "views/Userpages/mainpage";
+import Kycapprove from "views/Userpages/Kycapprove";
+import Campaignviewpage from "views/Campaignspages/Campaignviewpage";
 
 var hist = createBrowserHistory();
 
@@ -24,7 +26,8 @@ ReactDOM.render(
         <Route path="/Campaignlist" component={CampaignList} />
         <Route path="/Adminpanel" component={Adminpage} />
         <Route path="/profile/:id" component={Userprofile} />
-
+        <Route path="/Kycapprove" component={Kycapprove}/>
+        <Route path="/campaign/:id" component={Campaignviewpage} />
         <Redirect from="/" to="/home" />
       </Switch>
     </Router>

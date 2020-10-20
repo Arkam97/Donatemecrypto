@@ -1,11 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 
-// @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
-
-import FileCopyIcon from "@material-ui/icons/FileCopy";
-
 import AccountBoxIcon from "@material-ui/icons/AccountBox";
 import VpnKeyIcon from "@material-ui/icons/VpnKey";
 import List from "@material-ui/core/List";
@@ -21,8 +17,6 @@ import CardBody from "components/Card/CardBody.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardFooter from "components/Card/CardFooter.js";
 
-import { useSnackbar } from "notistack";
-// import Grid from '@material-ui/core/Grid';
 
 import styles from "assets/jss/material-kit-react/views/loginPage.js";
 
@@ -34,29 +28,11 @@ function Blockchainkey(props) {
     setCardAnimation("");
   }, 700);
 
-  const [privatekey, setprivatekey] = useState(privatekey);
-  const [publicKey, setPublicKey] = useState(publicKey);
-
-  const [canProceed, setCanProceed] = useState(false);
+  const [move, setmove] = useState(false);
 
   const classes = useStyles();
 
   const { ...rest } = props;
-  const { enqueueSnackbar } = useSnackbar();
-
-  const copyMessage = val => {
-    const selBox = document.createElement("textarea");
-    selBox.style.position = "fixed";
-    selBox.style.left = "0";
-    selBox.style.top = "0";
-    selBox.style.opacity = "0";
-    selBox.value = val;
-    document.body.appendChild(selBox);
-    selBox.focus();
-    selBox.select();
-    document.execCommand("copy");
-    document.body.removeChild(selBox);
-  };
 
   return (
     <div className={classes.container}>
@@ -64,12 +40,11 @@ function Blockchainkey(props) {
         <GridItem xs={12} sm={12} md={5}>
           <Card className={classes[cardAnimaton]}>
             <form className={classes.form}>
-              <CardHeader color="primary" className={classes.cardHeader}>
-                <h3>BLOCKCHAIN ACCOUNT</h3>
-                <h5>powered by Stellar</h5>
+              <CardHeader color="info" className={classes.cardHeader}>
+                <h3>Stellar Blockchain Account Keypair</h3>
               </CardHeader>
               <p className={classes.divider}>
-                Here are your Blockchain Credentials
+                Here are your Blockchain keys keep the private key safe 
               </p>
               <CardBody>
                 <List
@@ -83,62 +58,49 @@ function Blockchainkey(props) {
                     </ListItemIcon>
                     <ListItemText primary={"Public Key"} />
                   </ListItem>
-                  <ListItem
-                    button
-                    onClick={() => {
-                      copyMessage(publicKey);
-                      enqueueSnackbar("Public Key Copied", { variant: "info" });
-                    }}
-                  >
-                    <ListItemText primary={publicKey} />
-                    <FileCopyIcon />
+                  <ListItem>
+                    <ListItemText primary={props.publicKey} />
                   </ListItem>
                   <ListItem>
                     <ListItemIcon>
                       <VpnKeyIcon />
                     </ListItemIcon>
-                    <ListItemText primary={"Secret Key"} />
+                    <ListItemText primary={"Private Key"} />
                   </ListItem>
-                  <ListItem
-                    button
-                    onClick={() => {
-                      copyMessage(privatekey);
-                      enqueueSnackbar("Secret Key Copied", { variant: "info" });
-                    }}
-                  >
-                    <ListItemText primary={privatekey} /> <FileCopyIcon />
+                  <ListItem >
+                    <ListItemText primary={props.privatekey} />
                   </ListItem>
                 </List>
               </CardBody>
 
               <CardFooter className={classes.cardFooter}>
                 <Button
-                  color="primary"
-                  size="lg"
+                  color="info"
+                  regular
                   onClick={() => {
-                    var FileSaver = require("file-saver");
-                    var blob = new Blob(
+                    var txtfilesaver = require("file-saver");
+                    var blobfile = new Blob(
                       [
-                        "PublicKey: " + publicKey + " \nprivatekey: " + privatekey
+                        "PublicKey: " + props.publicKey + " \nprivatekey: " + props.privatekey
                       ],
                       { type: "text/plain;charset=utf-8" }
                     );
-                    FileSaver.saveAs(blob, "Human_Credentials.txt");
+                    txtfilesaver.saveAs( blobfile, "donatemecrypto_keypair.txt");
 
-                    setCanProceed(true);
+                    setmove(true);
                   }}
                 >
-                  Export to file{" "}
+                  Export
                 </Button>
                 <Button
-                  color="primary"
-                  size="lg"
-                  disabled={!canProceed}
+                  color="info"
+                  regular
+                  disabled={!move}
                   onClick={() => {
                     props.history.push(props.prevroute);
                   }}
                 >
-                  Proceed{" "}
+                  Proceed
                 </Button>
               </CardFooter>
             </form>

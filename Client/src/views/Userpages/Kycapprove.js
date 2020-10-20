@@ -1,19 +1,16 @@
 import React, { useState } from "react";
-import { useHistory } from "react-router-dom";
 
-// @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
 import InputAdornment from "@material-ui/core/InputAdornment";
-
+import InputFiles from 'react-input-files';
 import PermIdentityIcon from "@material-ui/icons/PermIdentity";
 import FaceIcon from "@material-ui/icons/Face";
 import PhoneIcon from "@material-ui/icons/Phone";
 import HomeIcon from "@material-ui/icons/Home";
 import LocationCityIcon from "@material-ui/icons/LocationCity";
-import PublicIcon from "@material-ui/icons/Public";
-import LocalPostOfficeIcon from "@material-ui/icons/LocalPostOffice";
-import FilterHdrIcon from "@material-ui/icons/FilterHdr";
-
+import Header from "components/Header/Header.js";
+import HeaderLinks from "components/Header/HeaderLinks.js";
+import Parallax from "components/Parallax/Parallax.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import GridItem from "components/Grid/GridItem.js";
 import Button from "components/CustomButtons/Button.js";
@@ -24,157 +21,143 @@ import CardFooter from "components/Card/CardFooter.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { useSnackbar } from "notistack";
-import styles from "assets/jss/material-kit-react/views/loginPage.js";
-import { addKyc } from "utility/Usercontrol";
+import styles from "assets/jss/material-kit-react/views/componentsSections/loginStyle.js";
+import { createKyc } from "utility/Usercontrol";
 import ImageUploader from "react-images-upload";
+import image from "assets/img/poor.jpg";
+import image2 from "assets/img/bg2.jpg";
 import InputLabel from "@material-ui/core/InputLabel";
+import Footer from "components/Footer/Footer.js";
+import classNames from "classnames";
 import DateFnsUtils from "@date-io/date-fns";
 import {
   MuiPickersUtilsProvider,
-  // KeyboardTimePicker,
   KeyboardDatePicker
 } from "@material-ui/pickers";
-import MenuItem from "@material-ui/core/MenuItem";
-import Select from "@material-ui/core/Select";
 
-import CustomInputSelect from "components/CustomInputSelect/CustomInputSelect.js";
 
-const useStyles = makeStyles(styles);
+const kycstyles = makeStyles(styles);
 
 function Kycapprove(props) {
   const [cardAnimaton, setCardAnimation] = React.useState("cardHidden");
-  let history = useHistory();
   setTimeout(function() {
     setCardAnimation("");
   }, 700);
 
-  const [id, setId] = useState("");
-  const [dob, setDob] = useState(new Date());
-  const [idFront, setIdFront] = useState("");
-  const [idBack, setIdBack] = useState("");
-  const [faceIdFront, setFaceIdFront] = useState("");
-  const [fullname, setFullname] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [addressLineOne, setAddressLineOne] = useState("");
-  const [addressLineTwo, setAddressLineTwo] = useState("");
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("");
+  const classes = kycstyles();
+  const { ...rest } = props;
+
+  const [nid, setnid] = useState("");
+  const [birthdate, setbirthdate] = useState(new Date());
+  const [front, setfront] = useState([]);
+  const [back, setback] = useState([]);
+  const [facefront, setFacefront] = useState([]);
+  const [offletter, setoffletter] = useState([]);
+  const [fname, setfname] = useState("");
+  const [telno, settelno] = useState("");
+  const [addressone, setaddressone] = useState("");
+  const [addresstwo, setaddresstwo] = useState("");
 
   const [loading, setLoading] = useState(false);
 
-  const [idError, setIdError] = useState(false);
-  const [dobError, setDobError] = useState(false);
-  const [idFrontError, setIdFrontError] = useState(false);
-  const [idBackError, setIdBackError] = useState(false);
-  const [faceIdFrontError, setFaceIdFrontError] = useState(false);
-  const [fullnameError, setFullnameError] = useState(false);
-  const [telephoneError, setTelephoneError] = useState(false);
-  const [addressLineOneError, setAddressLineOneError] = useState(false);
-  // const [addressLineTwoError, setAddressLineTwoError] = useState(false);
-  const [cityError, setCityError] = useState(false);
-  const [provinceError, setProvinceError] = useState(false);
-  const [zipCodeError, setZipCodeError] = useState(false);
-  const [countryError, setCountryError] = useState(false);
+  const [nidError, setnidError] = useState(false);
+  const [birthdateError, setbirthdateError] = useState(false);
+  const [frontError, setfrontError] = useState(false);
+  const [backError, setbackError] = useState(false);
+  const [facefrontError, setFacefrontError] = useState(false);
+  const [offletterError, setoffletterError] = useState(false);
+  const [fnameError, setfnameError] = useState(false);
+  const [telnoError, settelnoError] = useState(false);
+  const [addressoneError, setaddressoneError] = useState(false);
+  const [addresstwoError, setaddresstwoError] = useState(false);
 
-  const classes = useStyles();
 
-  // const { ...rest } = props;
   const { enqueueSnackbar } = useSnackbar();
+  
 
-  const idFrontDrop = picture => {
+  const frontimage = picture => {
     if (picture.length > 0) {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        setIdFront(reader.result);
-        setIdFrontError(false);
-      });
-      reader.readAsDataURL(picture[0]);
+      setfront(picture);
+      setfrontError(false); 
     } else {
-      setIdFront("");
-      setIdFrontError(true);
+      setfront(null);
+      setfrontError(true);
     }
   };
 
-  const idBackDrop = picture => {
+  const backimage = picture => {
     if (picture.length > 0) {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        setIdBack(reader.result);
-        setIdBackError(false);
-      });
-      reader.readAsDataURL(picture[0]);
+        setback(picture);
+        setbackError(false);
     } else {
-      setIdBack("");
-      setIdBackError(true);
+      setback(null);
+      setbackError(true);
     }
   };
 
-  const faceIdFrontDrop = picture => {
+  const facefrontimage = picture => {
     if (picture.length > 0) {
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        setFaceIdFront(reader.result);
-        setFaceIdFrontError(false);
-      });
-      reader.readAsDataURL(picture[0]);
+        setFacefront(picture);
+        setFacefrontError(false);
     } else {
-      setFaceIdFront("");
-      setFaceIdFrontError(true);
+      setFacefront(null);
+      setFacefrontError(true);
+    }
+  };
+
+  const offletterimage = picture => {
+    if (picture.length > 0) {
+        setoffletter(picture);
+        setoffletterError(false);
+    } else {
+      setoffletter(null);
+      setoffletterError(true);
     }
   };
   const Kycaccess = async event => {
     event.preventDefault();
 
     //required check
-    setIdError(id == "" ? true : false);
-    setDobError(dob > new Date() || dob == new Date() ? true : false);
-    setIdFrontError(idFront == "" ? true : false);
-    setIdBackError(idBack == "" ? true : false);
-    setFaceIdFrontError(faceIdFront == "" ? true : false);
-    setFullnameError(fullname == "" ? true : false);
-    setTelephoneError(telephone == "" ? true : false);
-    setAddressLineOneError(addressLineOne == "" ? true : false);
-    setCityError(city == "" ? true : false);
-    setProvinceError(province == "" ? true : false);
-    setZipCodeError(zipCode == "" ? true : false);
-    setCountryError(country == "" ? true : false);
+    setnidError(nid === "" ? true : false);
+    setbirthdateError(birthdate > new Date() || birthdate === new Date() ? true : false);
+    setfrontError(front.length === 0 ? true : false);
+    setbackError(back.length === 0 ? true : false);
+    setFacefrontError(facefront.length === 0 ? true : false);
+    setoffletterError(offletter.length === 0 ? true : false);
+    setfnameError(fname === "" ? true : false);
+    settelnoError(telno === "" ? true : false);
+    setaddressoneError(addressone === "" ? true : false);
+    setaddresstwoError(addressone === "" ? true : false);
 
     if (
-      id != "" &&
-      idFront != "" &&
-      idBack != "" &&
-      faceIdFront != "" &&
-      fullname != "" &&
-      telephone != "" &&
-      addressLineOne != "" &&
-      city != "" &&
-      province != "" &&
-      zipCode != "" &&
-      country != ""
+      nid !== "" &&
+      front.length !== 0 &&
+      back.length !== 0 &&
+      facefront.length !== 0 &&
+      offletter.length !== 0 &&
+      fname !== "" &&
+      telno !== "" &&
+      addressone !== "" &&
+      addresstwo !== ""
     ) {
       setLoading(true);
 
-      const response = await addKyc({
-        idNo: id,
-        dob: dob,
-        idFront: idFront,
-        idBack: idBack,
-        faceIdFront: faceIdFront,
-        fullname: fullname,
-        telephone: telephone,
-        addressLineOne: addressLineOne,
-        addressLineTwo: addressLineTwo,
-        city: city,
-        province: province,
-        zipCode: zipCode,
-        country: country
-      });
+      const response = await createKyc(
+        nid,
+        birthdate,
+        front[0],
+        back[0],
+        facefront[0],
+        offletter[0],
+        fname,
+        telno,
+        addressone,
+        addresstwo,
+      );
       switch (response) {
         case 200:
           enqueueSnackbar("Submitted for Approval", { variant: "success" });
-          props.history.push(props.prevroute);
+          props.history.push('/');
           break;
         case 201:
           enqueueSnackbar("Kyc is Already Approved", { variant: "warning" });
@@ -193,404 +176,296 @@ function Kycapprove(props) {
   };
 
   return (
-    <div className={classes.container}>
-      <GridContainer justify="center">
-        <GridItem xs={12} sm={12} md={10}>
-          <Card className={classes[cardAnimaton]}>
-            <form
-              className={classes.form}
-              style={
-                loading
-                  ? {
-                      filter: "blur(1px)",
-                      "-webkit-filter": "blur(1px)"
-                    }
-                  : null
-              }
-              onSubmit={Kycaccess}
-            >
-              <CardHeader color="primary" className={classes.cardHeader}>
-                <h3>Know Your Consumer</h3>
-              </CardHeader>
-              <p className={classes.divider}>
-                Help us understand your role better
-              </p>
-              <CardBody>
-                <GridContainer>
-                  <GridItem xs={12} sm={12} md={6} lg={6}>
-                    <CustomInput
-                      error={idError}
-                      labelText="Identity Number*"
-                      id="idNo"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <PermIdentityIcon
-                              className={classes.inputIconsColor}
-                            />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setId(e.target.value);
-                          setIdError(e.target.value == "" ? true : false);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={6}>
-                    <CustomInput
-                      error={fullnameError}
-                      labelText="Full Name *"
-                      id="fullname"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <FaceIcon className={classes.inputIconsColor} />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setFullname(e.target.value);
-                          setFullnameError(e.target.value == "" ? true : false);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={6}>
-                    <CustomInput
-                      error={telephoneError}
-                      labelText="Phone Number *"
-                      id="telephone"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <PhoneIcon className={classes.inputIconsColor} />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setTelephone(e.target.value);
-                          setTelephoneError(
-                            e.target.value == "" ? true : false
-                          );
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={12} lg={6}>
-                    <MuiPickersUtilsProvider
-                      utils={DateFnsUtils}
-                      style={
-                        dobError
-                          ? {
-                              "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red"
-                            }
-                          : null
-                      }
-                    >
-                      <KeyboardDatePicker
+    <div>
+      <Header
+        color="white"
+        brand="Donatemecrypto"
+        rightLinks={<HeaderLinks />}
+        fixed
+        changeColorOnScroll={{
+          height: 200,
+          color: "white"
+        }}
+        {...rest}
+      />
+      <Parallax
+        style={{ height: "200px" }}
+        small
+        filter
+        image={require("assets/img/bg2.jpg")}
+      />
+      <div
+        className={classes.pageHeader}
+        style={{
+          background : "url("+image2+")",
+          backgroundSize: "fixed",
+          backgroundPosition: "top center"
+        }}
+      >
+        <div className={classNames(classes.main, classes.mainRaised)}>
+          <div>
+            <div className={classes.container}>
+              <GridContainer justify="center">
+                <GridItem xs={12} sm={12} md={10}>
+                  <Card>
+                    <form
+                      className={classes.form}
                         style={
-                          dobError
-                            ? {
-                                "box-shadow":
-                                  "0 6px 10px 0 red, 0 6px 20px 0 red"
-                              }
-                            : null
-                        }
-                        margin="normal"
-                        id="date-picker-dialog"
-                        label="Date of Birth *"
-                        format="MM/dd/yyyy"
-                        value={dob}
-                        onChange={date => {
-                          setDob(date);
-                          setDobError(
-                            date > new Date() || date == new Date()
-                              ? true
-                              : false
-                          );
-                        }}
-                        KeyboardButtonProps={{
-                          "aria-label": "change date"
-                        }}
-                      />
-                    </MuiPickersUtilsProvider>
-                  </GridItem>
-                </GridContainer>
-                <GridContainer>
-                  <GridItem xs={12} sm={12} md={4} lg={3}>
-                    <InputLabel>ID Card Front Side *</InputLabel>
-                    <ImageUploader
-                      style={
-                        idFrontError
+                          loading
                           ? {
-                              "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red"
-                            }
-                          : null
-                      }
-                      className="title"
-                      withIcon={true}
-                      singleImage={true}
-                      label={
-                        idFront != ""
-                          ? "ID Card Front Side Selected"
-                          : "ID Card Front Side Not Selected"
-                      }
-                      buttonText="Select Image *"
-                      onChange={idFrontDrop}
-                      imgExtension={[".jpg", ".gif", ".png"]}
-                      maxFileSize={2000000}
-                      withPreview={true}
-                      fileSizeError={"Exceeds max size of 2 mb"}
-                      fileTypeError={"Is not of type JPG, PNG or GIF"}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={4} lg={3}>
-                    <InputLabel>ID Card Back Side *</InputLabel>
-                    <ImageUploader
-                      style={
-                        idBackError
-                          ? {
-                              "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red"
-                            }
-                          : null
-                      }
-                      className="title"
-                      withIcon={true}
-                      singleImage={true}
-                      label={
-                        idBack != ""
-                          ? "ID Card Back Side Selected"
-                          : "ID Card Back Side Not Selected"
-                      }
-                      buttonText="Select Image *"
-                      onChange={idBackDrop}
-                      imgExtension={[".jpg", ".gif", ".png"]}
-                      maxFileSize={2000000}
-                      withPreview={true}
-                      fileSizeError={"Exceeds max size of 2 mb"}
-                      fileTypeError={"Is not of type JPG, PNG or GIF"}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={4} lg={3}>
-                    <InputLabel>Selfie Holding ID Card*</InputLabel>
-                    <ImageUploader
-                      style={
-                        faceIdFrontError
-                          ? {
-                              "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red"
-                            }
-                          : null
-                      }
-                      className="title"
-                      withIcon={true}
-                      singleImage={true}
-                      label={
-                        faceIdFront != ""
-                          ? "Face Id Selected"
-                          : "Face Id Not Selected"
-                      }
-                      buttonText="Select Image *"
-                      onChange={faceIdFrontDrop}
-                      imgExtension={[".jpg", ".gif", ".png"]}
-                      maxFileSize={2000000}
-                      withPreview={true}
-                      fileSizeError={"Exceeds max size of 2 mb"}
-                      fileTypeError={"Is not of type JPG, PNG or GIF"}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={12} lg={12}>
-                    <CustomInputSelect
-                      error={countryError}
-                      options={
-                        <Select
-                          value={country}
-                          onChange={e => {
-                            setCountry(e.target.value);
-                            setCountryError(
-                              e.target.value == "" ? true : false
-                            );
-                          }}
-                          displayEmpty
-                          className={classes.selectEmpty}
-                        >
-                          <MenuItem value="">
-                            <em>Choose Your Country</em>
-                          </MenuItem>
-                          <MenuItem value={"SL"}>Sri Lanka</MenuItem>
-                        </Select>
-                      }
-                      labelText="Country *"
-                      id="country"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <PublicIcon className={classes.inputIconsColor} />
-                          </InputAdornment>
-                        ),
-                        required: true
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={6}>
-                    <CustomInput
-                      error={addressLineOneError}
-                      labelText="Address Line One *"
-                      id="addressLineOne"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <HomeIcon className={classes.inputIconsColor} />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setAddressLineOne(e.target.value);
-                          setAddressLineOneError(
-                            e.target.value == "" ? true : false
-                          );
+                          filter: "blur(1px)",
+                          "-webkit-filter": "blur(1px)"
                         }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={6}>
-                    <CustomInput
-                      // error={addressLineTwoError}
-                      labelText="Address Line Two"
-                      id="addressLineTwo"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <HomeIcon className={classes.inputIconsColor} />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setAddressLineTwo(e.target.value);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={4}>
-                    <CustomInput
-                      error={cityError}
-                      labelText="City *"
-                      id="city"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <LocationCityIcon
-                              className={classes.inputIconsColor}
-                            />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setCity(e.target.value);
-                          setCityError(e.target.value == "" ? true : false);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={4}>
-                    <CustomInput
-                      error={provinceError}
-                      labelText="Province *"
-                      id="province"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <FilterHdrIcon
-                              className={classes.inputIconsColor}
-                            />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setProvince(e.target.value);
-                          setProvinceError(e.target.value == "" ? true : false);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                  <GridItem xs={12} sm={12} md={6} lg={4}>
-                    <CustomInput
-                      error={zipCodeError}
-                      labelText="Zip Code *"
-                      id="zipCode"
-                      formControlProps={{
-                        fullWidth: true
-                      }}
-                      inputProps={{
-                        type: "text",
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <LocalPostOfficeIcon
-                              className={classes.inputIconsColor}
-                            />
-                          </InputAdornment>
-                        ),
-                        required: true,
-                        onChange: function(e) {
-                          setZipCode(e.target.value);
-                          setZipCodeError(e.target.value == "" ? true : false);
-                        }
-                      }}
-                    />
-                  </GridItem>
-                </GridContainer>
-
-                {loading && <LinearProgress />}
-              </CardBody>
-
-              <CardFooter className={classes.cardFooter}>
-                <Button
-                  color="primary"
-                  size="lg"
-                  type={"submit"}
-                  disabled={loading}
-                  onClick={Kycaccess}
+                      : null
+                  }
+                  onSubmit={Kycaccess}
                 >
-                  Proceed{" "}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </GridItem>
-      </GridContainer>
+                  <CardHeader color="info" className={classes.cardHeader}>
+                    <h3>Know Your Customer</h3>
+                  </CardHeader>
+                  <CardBody>
+                        <GridContainer>
+                          <GridItem xs={12} sm={12} md={6} lg={6}>
+                            <CustomInput
+                              error={nidError}
+                              labelText=" National Identity Number*"
+                              id="nid"
+                              formControlProps={{
+                                fullWidth: true
+                              }}
+                              inputProps={{
+                                type: "text",
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <PermIdentityIcon
+                                      className={classes.inputIconsColor}
+                                    />
+                                  </InputAdornment>
+                                ),
+                                required: true,
+                                onChange: function(e) {
+                                  setnid(e.target.value);
+                                  setnidError(e.target.value == "" ? true : false);
+                                }
+                              }}
+                            />
+                          </GridItem>
+                             <GridItem xs={12} sm={12} md={6} lg={6}>
+                              <CustomInput
+                              error={fnameError}
+                              labelText="Full Name *"
+                              id="fname"
+                              formControlProps={{
+                                fullWidth: true
+                              }}
+                              inputProps={{
+                                type: "text",
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <FaceIcon className={classes.inputIconsColor} />
+                                  </InputAdornment>
+                                ),
+                                required: true,
+                                onChange: function(e) {
+                                  setfname(e.target.value);
+                                  setfnameError(e.target.value == "" ? true : false);
+                                }
+                              }}
+                            />
+                          </GridItem>
+                          <GridItem xs={12} sm={12} md={6} lg={6}>
+                            <CustomInput
+                              error={telnoError}
+                              labelText="Phone Number *"
+                              id="telno"
+                              formControlProps={{
+                                fullWidth: true
+                              }}
+                              inputProps={{
+                                type: "text",
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <PhoneIcon className={classes.inputIconsColor} />
+                                  </InputAdornment>
+                                ),
+                                required: true,
+                                onChange: function(e) {
+                                  settelno(e.target.value);
+                                  settelnoError(
+                                    e.target.value == "" ? true : false
+                                  );
+                                }
+                              }}
+                            />
+                          </GridItem>
+                          <GridItem xs={12} sm={12} md={6} lg={6}>
+                          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                          <KeyboardDatePicker
+                                style={birthdateError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                                margin="normal"
+                                id="date-picker-dialog"
+                                label="Date of Birth *"
+                                format="MM/dd/yyyy"
+                                value={birthdate}
+                                onChange={date => {
+                                  setbirthdate(date);
+                                  setbirthdateError(
+                                    date > new Date() || date === new Date() ? true : false);
+                                }}
+                                KeyboardButtonProps={{
+                                  "aria-label": "change date"
+                                }}
+                              />
+                            </MuiPickersUtilsProvider>
+                          </GridItem>
+                          <GridItem xs={12} sm={12} md={3} lg={3}>
+                            <InputLabel>NIC Card Front*</InputLabel>
+                            <ImageUploader
+                              style={frontError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                              label={
+                                front.length === 0 
+                                  ?  "Not Selected"
+                                  : "Selected"
+                              }     
+                              withIcon={true}
+                              onChange={frontimage}
+                              imgExtension={[".jpg", ".gif", ".png", ".gif"]}
+                              maxFileSize={5242880}
+                              withPreview={true}
+                              singleImage={true}
+                              buttonText="Select Image *"                         
+                            />
+                        </GridItem>
+                      <GridItem xs={12} sm={12} md={3} lg={3}>
+                        <InputLabel>NIC Card Back*</InputLabel>
+                        <ImageUploader
+                              style={backError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                              label={
+                                back.length === 0 
+                                  ?  "Not Selected"
+                                  : "Selected"
+                              }     
+                              withIcon={true}
+                              onChange={backimage}
+                              imgExtension={[".jpg", ".gif", ".png", ".gif"]}
+                              maxFileSize={5242880}
+                              withPreview={true}
+                              singleImage={true}
+                              buttonText="Select Image *"                         
+                            />
+                      </GridItem>
+                      <GridItem xs={12} sm={12} md={4} lg={3}>
+                        <InputLabel>clear photo of you*</InputLabel>
+                        <ImageUploader
+                             style={facefrontError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                             label={
+                              facefront.length === 0 
+                                 ?  "Not Selected"
+                                 : "Selected"
+                             }       
+                              withIcon={true}
+                              onChange={facefrontimage}
+                              imgExtension={[".jpg", ".gif", ".png", ".gif"]}
+                              maxFileSize={5242880}
+                              withPreview={true}
+                              singleImage={true}
+                              buttonText="Select Image *"                         
+                            />                       
+                      </GridItem>
+                      <GridItem xs={12} sm={12} md={4} lg={3}>
+                        <InputLabel>Proof From VilageOfficer*</InputLabel>
+                        <ImageUploader
+                              style={offletterError ? { "box-shadow": "0 6px 10px 0 red, 0 6px 20px 0 red" } : null}
+                              label={
+                                offletter.length === 0 
+                                  ?  "Not Selected"
+                                  : "Selected"
+                              }     
+                              withIcon={true}
+                              onChange={offletterimage}
+                              imgExtension={[".jpg", ".gif", ".png", ".gif"]}
+                              maxFileSize={5242880}
+                              withPreview={true}
+                              singleImage={true}
+                              buttonText="Select Image *"                         
+                            />
+                      </GridItem>
+                      <GridItem xs={12} sm={12} md={12} lg={12}>
+                        <CustomInput
+                          error={addressoneError}
+                          labelText="Home Address *"
+                          id="addressone"
+                          formControlProps={{
+                            fullWidth: true
+                          }}
+                          inputProps={{
+                            type: "text",
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <HomeIcon className={classes.inputIconsColor} />
+                              </InputAdornment>
+                            ),
+                            required: true,
+                            onChange: function(e) {
+                              setaddressone(e.target.value);
+                              setaddressoneError(
+                                e.target.value == "" ? true : false
+                              );
+                            }
+                          }}
+                        />
+                      </GridItem>
+                      <GridItem xs={12} sm={12} md={12} lg={12}>
+                        <CustomInput
+                          error={addresstwoError}
+                          labelText="Working place address"
+                          id="addresstwo"
+                          formControlProps={{
+                            fullWidth: true
+                          }}
+                          inputProps={{
+                            type: "text",
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <LocationCityIcon
+                                  className={classes.inputIconsColor}
+                                />
+                              </InputAdornment>
+                            ),
+                            required: true,
+                            onChange: function(e) {
+                              setaddresstwo(e.target.value);
+                              setaddresstwoError(
+                                e.target.value == "" ? true : false
+                              );
+                            }
+                          }}
+                        />
+                      </GridItem>
+                    </GridContainer>
+                    {loading && <LinearProgress />}
+                  </CardBody>
+
+                  <CardFooter className={classes.cardFooter}>
+                    <Button
+                      color="info"
+                      size="lg"
+                      type={"submit"}
+                      disabled={loading}
+                      onClick={Kycaccess}
+                    >
+                      Proceed{" "}
+                        </Button>
+                      </CardFooter>
+                    </form>
+                  </Card>
+                </GridItem>
+              </GridContainer>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import HeaderLinks from "components/Header/HeaderLinks.js";
 import Footer from "components/Footer/Footer.js";
 import styles from "assets/jss/material-kit-react/views/loginPage.js";
 import image from "assets/img/poor.jpg";
+import image2 from "assets/img/bg2.jpg";
 
 import Signin from "views/Userpages/Signin";
 import Signup from "views/Userpages/Signup";
@@ -25,6 +26,7 @@ function Mainpage
   const { ...rest } = props;
 
   useEffect(() => {
+
     if (props.location.search && props.location.search != "") {
       const from = props.location.search.split("=");
       const route = atob(from[1]);
@@ -44,7 +46,7 @@ function Mainpage
       <div
         className={classes.pageHeader}
         style={{
-          backgroundImage: "url(" + image + ")",
+          backgroundImage: "url(" + image2 + ")",
           backgroundSize: "fixed",
           backgroundPosition: "top center"
         }}
@@ -57,17 +59,12 @@ function Mainpage
             <Signup prevroute={prevroute} setaction={setaction} history={props.history}
               setprivatekey={setprivatekey} setpublicKey={setpublicKey} />
           )
-        }
-        {
-          action === 'Kycapprove' && (
-            <Kycapprove setaction={setaction} history={props.history} prevroute={prevroute} />
-          )
-        }
+        } 
         {
           action === 'Blockchainkey' && (
             <Blockchainkey prevroute={prevroute} setaction={setaction}
               history={props.history} privatekey={privatekey} publicKey={publicKey} />
-          )
+          ) 
         }
         <Footer whiteFont />
       </div >
