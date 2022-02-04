@@ -30,7 +30,7 @@ router.post('/signin', async (req, res) => {
       let tokenBody = exuser;
       tokenBody.exp = Math.floor(new Date().getTime() / 1000.0) + 12000;
       let token = jwt.sign( {tokenBody}, 'ijk3dp4n');
-      return res.status(200).json(token);
+      
     }
       
   } catch (err) {

@@ -14,8 +14,13 @@ module.exports = {
   },
   plugins: ["react"],
   extends: [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:prettier/recommended"
-  ]
+    // "eslint:recommended",
+    // "plugin:react/recommended",
+    // "plugin:prettier/recommended"
+    // "some-other-config-you-use",
+    "prettier"
+  ],
+  rules: {
+    'prettier/prettier': 0,
+  }
 };
