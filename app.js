@@ -48,14 +48,18 @@ app.use((error, req, res, next) => {
 
 
 mongoose
-  .connect(
+  .connect(process.env.MONGODBURI ||
     'mongodb+srv://arkam:A777467304b@cluster-arkam-bav5m.mongodb.net/Donateme?retryWrites=true&w=majority',
   {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}
-  )
-  .then(() => {
-    app.listen(5000);
-    console.log(`Donatemecrypto Connected to database on port ${port}`);
-  })
-  .catch(err => {
-    console.log(err);
-  });
+  ).then(() => console.log(`***mongodb connected`))
+  .catch(err => console.log(err));
+
+
+ if(process.env.NODE_ENV === 'production'){
+   app.use(express.static('Client/build'));   
+ }
+  app.listen(port, () =>
+  console.log(`server running on port ${port}`)
+);
+;
+ 
