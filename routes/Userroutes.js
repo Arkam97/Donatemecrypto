@@ -30,7 +30,11 @@ router.post('/signin', async (req, res) => {
       let tokenBody = exuser;
       tokenBody.exp = Math.floor(new Date().getTime() / 1000.0) + 12000;
       let token = jwt.sign( {tokenBody}, 'ijk3dp4n');
+<<<<<<< HEAD:routes/Userroutes.js
       res.status(200).json(token);
+=======
+      
+>>>>>>> ff7b95f9e832467b9e5807fae127a7f468a1e55e:Server/api/routes/Userroutes.js
     }
       
   } catch (err) {
