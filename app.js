@@ -7,6 +7,7 @@ const userroutes = require("./routes/userroutes.js");
 const fs = require('fs');
 const port = process.env.PORT || 5000;
 const app = express();
+require('dotenv').config();
 
 
 
