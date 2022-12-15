@@ -25,7 +25,7 @@
     "compression": "^1.7.4",
     "crypto-js": "^4.0.0",
     "dotenv": "^16.0.0",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-validator": "^6.5.0",
     "fs": "0.0.1-security",
     "fuse.js": "^5.1.0",
